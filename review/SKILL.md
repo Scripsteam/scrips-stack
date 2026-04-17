@@ -14,7 +14,7 @@ git diff main...HEAD --stat
 git diff main...HEAD
 ```
 
-Identify which layer changed: Flutter · .NET API · React Admin · Signal DS · Supabase · Infra
+Identify which layer changed: Flutter · .NET API · React Admin · Signal DS · Database · Infra
 
 ## Review checklist by layer
 
@@ -48,12 +48,12 @@ Identify which layer changed: Flutter · .NET API · React Admin · Signal DS ·
 - [ ] Error responses return `ProblemDetails` format
 - [ ] No secrets in code — use `IConfiguration`
 
-### Supabase / Database
+### Database
 
-- [ ] Every new table has RLS enabled
-- [ ] RLS policies are restrictive by default (deny all, then allow)
-- [ ] No direct Supabase client calls from Flutter bypassing the API layer (unless explicitly for real-time subscriptions)
-- [ ] Migration files are reversible (has both `up` and `down`)
+- [ ] No raw SQL string concatenation — use EF Core or parameterized queries
+- [ ] Migration files are reversible (`up` and `down`)
+- [ ] No sensitive data returned that isn't needed by the caller
+- [ ] New tables/columns have appropriate access control at the API layer
 
 ### Signal DS (scrips-signal-ds)
 

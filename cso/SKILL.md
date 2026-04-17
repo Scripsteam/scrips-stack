@@ -1,6 +1,6 @@
 ---
 name: cso
-description: Security audit for Scrips — OWASP Top 10, STRIDE threat model, Supabase RLS, Flutter deep links, .NET auth. Use when asked for a security audit, before major releases, or when adding auth/data features.
+description: Security audit for Scrips — OWASP Top 10, STRIDE threat model, SQL injection, Flutter deep links, .NET auth. Use when asked for a security audit, before major releases, or when adding auth/data features.
 ---
 
 # /cso — Scrips Security Audit
@@ -12,7 +12,7 @@ You are the Scrips Chief Security Officer. You find real vulnerabilities, not th
 What's being audited?
 - **Full repo audit** — scan all layers
 - **Feature audit** — specific PR or feature
-- **Supabase audit** — RLS policies + Edge Functions
+- **Database audit** — access control, injection risks, migration safety
 - **API audit** — .NET endpoints
 - **Mobile audit** — Flutter deep links, local storage, auth
 
@@ -20,11 +20,9 @@ What's being audited?
 
 ### A01 — Broken Access Control
 
-**Supabase:**
-- Every table has RLS enabled? `SELECT tablename FROM pg_tables WHERE schemaname='public'`
-- Every RLS policy uses `auth.uid()` correctly?
-- No `USING (true)` policies (open read/write to anyone)?
-- Service role key is NOT in Flutter/React source code?
+**Database:**
+- No queries that expose data beyond the current user's tenant/org?
+- No stored procedures or views that bypass auth?
 
 **React Admin:**
 - Route-level auth check on all admin routes?
@@ -33,13 +31,15 @@ What's being audited?
 **.NET:**
 - `[Authorize]` on every non-public controller/endpoint?
 - No IDOR (can user A read user B's data by changing an ID in the URL)?
+- Tenant isolation enforced — every query scoped to authenticated user's org?
 
 ### A02 — Cryptographic Failures
 
-- Supabase JWT secret not in source code?
+- JWT signing secret not in source code?
 - No passwords stored in plaintext?
-- No sensitive data in localStorage (use httpOnly cookies or Supabase session)
+- No sensitive data in localStorage (use httpOnly cookies)
 - HTTPS enforced on all environments?
+- Connection strings not hardcoded — using `IConfiguration` / environment variables?
 
 ### A03 — Injection
 
@@ -53,16 +53,12 @@ What's being audited?
 
 ### A05 — Security Misconfiguration
 
-**Supabase:**
-- `auth.email_confirmations` enabled in production?
-- Email OTP expiry set (not default)?
-- No debug endpoints exposed in production?
-- Storage bucket policies: are public buckets intentional?
-
 **.NET:**
 - `ASPNETCORE_ENVIRONMENT` is `Production` in prod?
 - Error pages don't expose stack traces?
 - Swagger disabled in production?
+- No debug endpoints or health checks exposing internals?
+- Email confirmations required for new accounts?
 
 ### A07 — Identification and Authentication Failures
 
@@ -83,7 +79,7 @@ What's being audited?
 
 - Auth failures logged?
 - Suspicious patterns (brute force, unusual data access) monitored?
-- Supabase audit logs enabled?
+- DB query errors and slow queries logged (not silently swallowed)?
 
 ## STRIDE threat model (for new features)
 
@@ -131,6 +127,53 @@ Fix: Use parameterized query: `WHERE id = @patientId`
 ### Recommendations
 [Any systemic improvements beyond individual findings]
 ```
+
+## Phase 3 — Dependency Supply Chain
+
+```bash
+npm audit --audit-level=high
+cat package-lock.json | grep '"resolved"' | grep -v 'registry.npmjs.org'
+```
+
+- Any `npm audit` HIGH or CRITICAL findings with known exploits?
+- Is `package-lock.json` committed and up to date? (missing lockfile = silent upgrades)
+- Any `postinstall` scripts in production dependencies? Audit them.
+- Are there direct deps pulling in unexpected transitive deps with far more permissions?
+
+## Phase 4 — CI/CD Pipeline Security (GitHub Actions)
+
+```bash
+cat .github/workflows/*.yml 2>/dev/null || echo "No workflows found"
+```
+
+- Any actions pinned to a floating tag (`uses: actions/checkout@main`) instead of a SHA?
+- Any `pull_request_target` trigger? That runs in the repo context with secrets — dangerous for forks.
+- Any `${{ github.event.issue.title }}` or similar in `run:` blocks? That's script injection.
+- Are secrets scoped to environments, or are they repo-wide accessible to all branches?
+
+## Phase 5 — Infrastructure Shadow Surface
+
+- **Dockerfiles:** Is `USER root` in the final stage? Should drop to non-root before `CMD`.
+- **IaC (Terraform):** Any `"*"` in IAM actions or resources? Flag it — over-permissioned roles are lateral movement enablers.
+- **Connection strings:** Any `appsettings.json`, `.env.example`, or `docker-compose.yml` with real credentials committed?
+- **Connection strings / DB credentials:** Never in client-side bundles or committed source. Check `appsettings.json`, `.env`, `pubspec.yaml`, `config.ts`.
+
+## Phase 6 — Webhook & Integration Audit (n8n)
+
+- **Signature verification:** Any incoming webhooks (n8n, Slack, Stripe) that don't verify the signature header? Anyone can spoof events.
+- **TLS:** Any HTTP (not HTTPS) callback URLs in n8n workflows?
+- **OAuth scopes:** Are n8n integrations requesting minimal scopes? Full-account tokens for read-only tasks = unnecessary blast radius.
+- **Secrets in workflow JSON:** Any hardcoded tokens in `n8n-workflows/*.json`? Should use n8n credential store.
+
+## Phase 7 — LLM & AI Security (JITAI and future AI features)
+
+Relevant because Scrips is adding AI features (JITAI scheduling AI, recommendations).
+
+- **Prompt injection:** Is any user-controlled input passed directly to an LLM prompt without sanitization? Attacker can exfiltrate data or override instructions.
+- **Unsanitized LLM output:** Is LLM output rendered as HTML without escaping? → XSS. Is it passed to `eval()`? → RCE.
+- **RAG poisoning:** If AI reads patient data or Confluence docs, can a malicious document in the corpus override behavior?
+- **Data minimization:** Is the LLM getting more patient context than needed for the task? Minimize PII sent to external models.
+- **Audit trail:** Are AI-influenced clinical decisions logged with the model version, prompt, and output? Required for compliance and incident review.
 
 ## Rules
 

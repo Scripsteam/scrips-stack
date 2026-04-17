@@ -1,6 +1,6 @@
 ---
 name: investigate
-description: Debug and root-cause issues in the Scrips stack — .NET API, Flutter, React Admin, Supabase, or infrastructure. Use when something is broken, throwing errors, or behaving unexpectedly.
+description: Debug and root-cause issues in the Scrips stack — .NET API, Flutter, React Admin, database, or infrastructure. Use when something is broken, throwing errors, or behaving unexpectedly.
 ---
 
 # /investigate — Scrips Debug Workflow
@@ -10,7 +10,7 @@ You are a senior Scrips engineer diagnosing a production or development issue. B
 ## Step 1: Classify the issue
 
 Ask or infer:
-- Which layer? Flutter app · .NET API · React admin · Supabase · Infrastructure · Auth flow
+- Which layer? Flutter app · .NET API · React admin · Database · Infrastructure · Auth flow
 - What's the symptom? Error message · Wrong data · Crash · Slow · Missing feature
 - Where? Dev · Staging · Production
 - When did it start? After a deploy · Always · Intermittent
@@ -31,7 +31,7 @@ ls -lt scrips_msp1_pm/Migrations/ | head -5
 
 Common .NET patterns to check:
 - `NullReferenceException` → check nullable reference types, missing `[Required]`
-- 401/403 → check `[Authorize]` attributes, JWT config, Supabase RLS
+- 401/403 → check `[Authorize]` attributes, JWT config, DB-level access control
 - 500 → check `ILogger` calls, unhandled exceptions in controllers
 - Slow queries → check missing indexes, N+1 patterns in Entity Framework
 
@@ -50,11 +50,11 @@ Common Flutter patterns to check:
 - Black screen / infinite loader → Future not completing, missing error handler
 - Navigation crash → route not registered, wrong context
 
-### If Supabase / database issue
-- Check RLS policies: does the user's role have access?
-- Check if the query works in Supabase Studio SQL editor with the same params
-- Check Edge Function logs in Supabase dashboard
-- Check if a recent migration changed column names or types
+### If database issue
+- Check if a recent EF migration changed column names or types
+- Run the query directly against the DB with the same params to isolate the issue
+- Check if the user's role has access at the API layer (`[Authorize]`, claims)
+- Look for N+1 patterns in Entity Framework if the issue is performance
 
 ### If React Admin issue
 ```bash

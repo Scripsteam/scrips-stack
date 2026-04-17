@@ -80,7 +80,7 @@ Reviews your diff against Scrips standards. Gives you file:line findings with se
 | React / TypeScript | Signal DS component usage, DS token compliance, no `any` types, loading/error/empty states |
 | Flutter / Dart | `const` constructors, no business logic in `setState`, accessibility, proper image loading |
 | .NET C# | REST conventions, `[Authorize]` on all endpoints, no raw SQL, `ProblemDetails` error format |
-| Supabase | RLS on every table, restrictive-by-default policies, reversible migrations |
+| Database | No raw SQL, EF Core for queries, reversible migrations, no data leakage across tenants |
 | Signal DS | CSS variables, Storybook story for new components, accessibility |
 
 **Severity levels:** BLOCKER · HIGH · MEDIUM · POLISH
@@ -109,7 +109,7 @@ Root-causes issues in any part of the Scrips stack. Systematic: classify the lay
 **Stack coverage:**
 - .NET API — null refs, 401/403, slow EF queries, migration failures
 - Flutter — lifecycle bugs, null operators, navigation crashes, async gaps
-- Supabase — RLS policy mismatches, Edge Function errors, migration column changes
+- Database — EF migration issues, column changes, access control gaps, N+1 queries
 - React Admin — stale closures, bad useEffect deps, API auth headers, DS mismatches
 
 **Output:** root cause at file:line, fix, and one-sentence prevention note.
@@ -259,7 +259,7 @@ OWASP Top 10 + STRIDE threat model for the Scrips stack. Every finding has a fil
 ```
 
 **Coverage:**
-- Supabase RLS — every table, every policy
+- Database access control — every endpoint authorized, no cross-tenant leakage
 - .NET `[Authorize]` — every non-public endpoint
 - JWT expiry and refresh token rotation
 - Flutter — deep link validation, `flutter_secure_storage`, no keys in source
@@ -308,6 +308,29 @@ Every skill knows:
 - **Git conventions:** `feat/DEV-XXXX-slug` branches, `[DEV-XXXX] Message` commits
 - **Signal DS tokens:** all 9 tokens, no inventing colors
 - **Reviewers:** `Scripsteam/eng`
+
+---
+
+## Methodology skills
+
+Included in the install at `methodology/`. These are general-purpose engineering process skills — not Scrips-specific, but built into every engineer's workflow from day one.
+
+| Skill | When Claude invokes it |
+|---|---|
+| `/brainstorming` | Any new feature, component, or behavior |
+| `/writing-plans` | Before touching code on a multi-step task |
+| `/test-driven-development` | Before writing implementation code |
+| `/subagent-driven-development` | Executing a plan with parallel tasks |
+| `/executing-plans` | Resuming a plan in a new session |
+| `/systematic-debugging` | Bug, failure, unexpected behavior |
+| `/verification-before-completion` | Before claiming done |
+| `/dispatching-parallel-agents` | 2+ independent tasks |
+| `/finishing-a-development-branch` | Implementation complete, deciding how to integrate |
+| `/using-git-worktrees` | Isolated feature or sprint branch |
+| `/requesting-code-review` | Before opening a PR |
+| `/receiving-code-review` | When review feedback arrives |
+
+You can invoke any of them explicitly. Claude also invokes them automatically at the right moment.
 
 ---
 
