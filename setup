@@ -1,0 +1,30 @@
+#!/bin/bash
+# scrips-stack setup
+set -e
+
+SKILLS_DIR="$HOME/.claude/skills/scrips"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+echo "Setting up scrips-stack..."
+
+# If running from a different location, symlink or copy
+if [ "$SCRIPT_DIR" != "$SKILLS_DIR" ]; then
+  if [ -d "$SKILLS_DIR" ] && [ ! -L "$SKILLS_DIR" ]; then
+    echo "Existing scrips skills dir found at $SKILLS_DIR — backing up"
+    mv "$SKILLS_DIR" "${SKILLS_DIR}.bak.$(date +%s)"
+  fi
+  ln -sfn "$SCRIPT_DIR" "$SKILLS_DIR"
+  echo "Linked $SCRIPT_DIR → $SKILLS_DIR"
+fi
+
+# Create config dir
+mkdir -p "$HOME/.scrips-stack"
+echo '{"installed":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}' > "$HOME/.scrips-stack/config.json"
+
+echo ""
+echo "scrips-stack installed."
+echo ""
+echo "Add to your project's CLAUDE.md:"
+echo "  cat ~/.claude/skills/scrips/CLAUDE.md >> CLAUDE.md"
+echo ""
+echo "Available skills: /ship /review /investigate /sprint /design-sync /qa /brief /retro /cso /checkpoint"
