@@ -1,6 +1,7 @@
 #!/bin/bash
 # scrips-stack setup
 set -e
+shopt -s nullglob
 
 SKILLS_DIR="$HOME/.claude/skills"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -9,11 +10,13 @@ echo "Setting up scrips-stack from $SCRIPT_DIR..."
 mkdir -p "$SKILLS_DIR"
 
 # Keep the umbrella link so `~/.claude/skills/scrips/CLAUDE.md` resolves
-# (referenced by the routing snippet in the README)
+# (referenced by the routing snippet in the README).
+backup_path=""
 if [ "$SCRIPT_DIR" != "$SKILLS_DIR/scrips" ]; then
   if [ -d "$SKILLS_DIR/scrips" ] && [ ! -L "$SKILLS_DIR/scrips" ]; then
-    echo "Existing scrips dir at $SKILLS_DIR/scrips — backing up"
-    mv "$SKILLS_DIR/scrips" "$SKILLS_DIR/scrips.bak.$(date +%s)"
+    backup_path="$SKILLS_DIR/scrips.bak.$(date +%s)"
+    echo "Existing scrips dir at $SKILLS_DIR/scrips — backing up to $backup_path"
+    mv "$SKILLS_DIR/scrips" "$backup_path"
   fi
   ln -sfn "$SCRIPT_DIR" "$SKILLS_DIR/scrips"
 fi
@@ -22,18 +25,30 @@ fi
 # not ~/.claude/skills/scrips/<name>/SKILL.md. Without these symlinks the slash commands
 # never appear, even though the umbrella link above succeeds.
 linked=0
+replaced=0
 skipped=0
+linked_names=()
 for skill_md in "$SCRIPT_DIR"/*/SKILL.md; do
-  [ -f "$skill_md" ] || continue
   name=$(basename "$(dirname "$skill_md")")
   target="$SKILLS_DIR/$name"
+  desired="$SCRIPT_DIR/$name"
+
   if [ -e "$target" ] && [ ! -L "$target" ]; then
     echo "  skip $name — non-symlink already exists at $target"
     skipped=$((skipped + 1))
     continue
   fi
-  ln -sfn "$SCRIPT_DIR/$name" "$target"
+
+  # If a symlink already exists pointing at another collection (e.g. gstack),
+  # surface it as "replace" instead of silently retargeting.
+  if [ -L "$target" ] && [ "$(readlink "$target")" != "$desired" ]; then
+    echo "  replace $name — was → $(readlink "$target"), now → $desired"
+    replaced=$((replaced + 1))
+  fi
+
+  ln -sfn "$desired" "$target"
   linked=$((linked + 1))
+  linked_names+=("$name")
 done
 
 mkdir -p "$HOME/.scrips-stack"
@@ -42,7 +57,29 @@ printf '{"installed":"%s","source":"%s"}\n' \
   > "$HOME/.scrips-stack/config.json"
 
 echo ""
-echo "scrips-stack installed: $linked skills linked, $skipped skipped."
+echo "scrips-stack installed: $linked linked ($replaced replaced from another collection), $skipped skipped."
+[ -n "$backup_path" ] && echo "Backup of previous scrips dir: $backup_path (delete when satisfied)"
+
+# Verify by checking what the loader actually reads — the file at
+# ~/.claude/skills/<name>/SKILL.md. The previous `ls -la | grep '->'` form
+# false-negatived on Windows Git Bash, where ln -s falls back to junctions
+# or copies that don't render as `->` in `ls`.
 echo ""
-echo "Verify:  ls -la $SKILLS_DIR | grep -- '-> $SCRIPT_DIR'"
-echo "Then in Claude Code: /ship /review /investigate /sprint /design-sync /qa /brief /retro /cso /checkpoint /admin-sprint-runner /onboard /synth"
+echo "Verify (loader truth — works on macOS, Linux, and Windows Git Bash):"
+fail=0
+for name in "${linked_names[@]}"; do
+  if [ -f "$SKILLS_DIR/$name/SKILL.md" ]; then
+    echo "  ✓ $name"
+  else
+    echo "  ✗ $name — SKILL.md not reachable at $SKILLS_DIR/$name/SKILL.md"
+    fail=$((fail + 1))
+  fi
+done
+
+echo ""
+if [ "$fail" -eq 0 ]; then
+  echo "All skills registered. In Claude Code: /ship /review /investigate /sprint /design-sync /qa /brief /retro /cso /checkpoint /admin-sprint-runner /onboard /synth"
+else
+  echo "WARNING: $fail skill(s) not reachable. See above."
+  exit 1
+fi
