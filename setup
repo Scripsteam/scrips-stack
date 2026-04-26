@@ -2,29 +2,47 @@
 # scrips-stack setup
 set -e
 
-SKILLS_DIR="$HOME/.claude/skills/scrips"
+SKILLS_DIR="$HOME/.claude/skills"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-echo "Setting up scrips-stack..."
+echo "Setting up scrips-stack from $SCRIPT_DIR..."
+mkdir -p "$SKILLS_DIR"
 
-# If running from a different location, symlink or copy
-if [ "$SCRIPT_DIR" != "$SKILLS_DIR" ]; then
-  if [ -d "$SKILLS_DIR" ] && [ ! -L "$SKILLS_DIR" ]; then
-    echo "Existing scrips skills dir found at $SKILLS_DIR — backing up"
-    mv "$SKILLS_DIR" "${SKILLS_DIR}.bak.$(date +%s)"
+# Keep the umbrella link so `~/.claude/skills/scrips/CLAUDE.md` resolves
+# (referenced by the routing snippet in the README)
+if [ "$SCRIPT_DIR" != "$SKILLS_DIR/scrips" ]; then
+  if [ -d "$SKILLS_DIR/scrips" ] && [ ! -L "$SKILLS_DIR/scrips" ]; then
+    echo "Existing scrips dir at $SKILLS_DIR/scrips — backing up"
+    mv "$SKILLS_DIR/scrips" "$SKILLS_DIR/scrips.bak.$(date +%s)"
   fi
-  ln -sfn "$SCRIPT_DIR" "$SKILLS_DIR"
-  echo "Linked $SCRIPT_DIR → $SKILLS_DIR"
+  ln -sfn "$SCRIPT_DIR" "$SKILLS_DIR/scrips"
 fi
 
-# Create config dir
+# Register each skill flat — Claude Code's loader reads ~/.claude/skills/<name>/SKILL.md,
+# not ~/.claude/skills/scrips/<name>/SKILL.md. Without these symlinks the slash commands
+# never appear, even though the umbrella link above succeeds.
+linked=0
+skipped=0
+for skill_md in "$SCRIPT_DIR"/*/SKILL.md; do
+  [ -f "$skill_md" ] || continue
+  name=$(basename "$(dirname "$skill_md")")
+  target="$SKILLS_DIR/$name"
+  if [ -e "$target" ] && [ ! -L "$target" ]; then
+    echo "  skip $name — non-symlink already exists at $target"
+    skipped=$((skipped + 1))
+    continue
+  fi
+  ln -sfn "$SCRIPT_DIR/$name" "$target"
+  linked=$((linked + 1))
+done
+
 mkdir -p "$HOME/.scrips-stack"
-echo '{"installed":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}' > "$HOME/.scrips-stack/config.json"
+printf '{"installed":"%s","source":"%s"}\n' \
+  "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$SCRIPT_DIR" \
+  > "$HOME/.scrips-stack/config.json"
 
 echo ""
-echo "scrips-stack installed."
+echo "scrips-stack installed: $linked skills linked, $skipped skipped."
 echo ""
-echo "Add to your project's CLAUDE.md:"
-echo "  cat ~/.claude/skills/scrips/CLAUDE.md >> CLAUDE.md"
-echo ""
-echo "Available skills: /ship /review /investigate /sprint /design-sync /qa /brief /retro /cso /checkpoint"
+echo "Verify:  ls -la $SKILLS_DIR | grep -- '-> $SCRIPT_DIR'"
+echo "Then in Claude Code: /ship /review /investigate /sprint /design-sync /qa /brief /retro /cso /checkpoint /admin-sprint-runner /onboard /synth"

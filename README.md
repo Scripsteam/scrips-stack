@@ -23,6 +23,14 @@ cd ~/.claude/skills/scrips && ./setup
 
 That's it. The skills are now available in any Claude Code session.
 
+**Verify** (each skill should show as a symlink into the repo):
+
+```bash
+ls -la ~/.claude/skills | grep -- '-> .*scrips-stack\|-> .*skills/scrips/'
+```
+
+You should see one line per skill (`ship`, `review`, `sprint`, …). If the list is empty, re-run `./setup` and read its summary line.
+
 **Add routing to a specific repo** (so Claude auto-invokes the right skill without you typing it):
 
 ```bash
