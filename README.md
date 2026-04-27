@@ -23,6 +23,18 @@ cd ~/.claude/skills/scrips && ./setup
 
 That's it. The skills are now available in any Claude Code session.
 
+**Verify** (checks what Claude Code's loader actually reads — works on macOS, Linux, and Windows Git Bash):
+
+```bash
+for s in ship review sprint admin-sprint-runner brief retro qa design-sync investigate cso checkpoint onboard synth; do
+  test -e ~/.claude/skills/$s/SKILL.md && echo "✓ $s" || echo "✗ $s"
+done
+```
+
+Every line should be `✓`. If any are `✗`, re-run `./setup` — its summary line tells you what was linked, replaced, or skipped.
+
+> Why not `ls -la | grep '->'`? On Windows Git Bash, `ln -s` can fall back to junctions or copies depending on Developer Mode, so `ls` shows them as plain `drwx` with no `->` arrow — the grep would false-negative even when registration succeeded. Checking `SKILL.md` existence is the loader-truth test.
+
 **Add routing to a specific repo** (so Claude auto-invokes the right skill without you typing it):
 
 ```bash
