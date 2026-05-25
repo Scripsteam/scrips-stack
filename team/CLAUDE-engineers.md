@@ -55,12 +55,13 @@ Your **only asymmetry** is the stream you own. Everything else is shared discipl
 
 ---
 
-## The 4 primitives — when each fires (shared)
+## The 5 primitives — when each fires (shared)
 
 Full playbook: `~/.claude/skills/scrips/playbooks/24-7-engineering.md`. Both of you run the same daily shape.
 
 | Primitive | When |
 |---|---|
+| `/decompose-strategy` | **Before** any new stream / epic / sprint plan. Breaks the Discovery Idea into bounded contexts that each fit one Claude Code session. **Dependencies must be explicit** — what blocks what, parallel where possible, contract surfaces between streams. Run before `/writing-plans`, before stories, before tickets. If you skip this and jump to stories, you'll discover the dependency too late. |
 | `/goal` | Once per sprint mission. Initialize on Day 1. Wakes itself every weekday 06:00 with status + ask + risk. |
 | `git worktrees` | Every parallel task. Spawn under `~/scrips-repos/.worktrees/<stream>-<feature>/`. Clean up after merge. |
 | `CronCreate` | Every overnight. Regression sweep at 02:00, Slack DM summary at 06:00. |

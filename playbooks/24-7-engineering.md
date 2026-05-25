@@ -1,6 +1,6 @@
 # 24/7 Engineering Playbook
 
-> How to use Claude Code as a multiplier, not a typewriter. The four primitives
+> How to use Claude Code as a multiplier, not a typewriter. The five primitives
 > that turn one engineer into a team. Built for the June 2026 sprint —
 > practitioner rewrite + Template Studio + Workflow Studio + Care Pathway +
 > Rule Engine + CRM + Stock.
@@ -20,6 +20,56 @@
 ```
 
 Engineer-hours per day: 8. Claude-hours per day: 20+. **Multiplier comes from the gap.**
+
+---
+
+## Primitive 0 — `/decompose-strategy` · before any plan, before any ticket
+
+**This fires FIRST for any Discovery Idea you're about to take to execution.** Before you write a PRD section, before you draft a story, before you spawn a subagent — decompose the Idea into bounded contexts.
+
+The `/decompose-strategy` skill enforces three constraints simultaneously:
+
+1. **Context window** — each bounded context fits in one Claude Code session (≤ 2000 LOC, ≤ 5 files in scope)
+2. **Engineer capacity** — realistic velocity per engineer × sprint days
+3. **Dependencies** — what blocks what · what runs in parallel · what's a contract surface between streams
+
+### Why this fires first
+
+Skipping decompose and jumping to stories means you discover the dependency too late. Andrew + Tariq's June streams cross at `EncounterTemplate` — that contract surface must be visible in the decomposition output, not invented mid-sprint. Same for Care Pathway depending on the EHR tab, CRM depending on the notification service, Stock depending on the supplier link.
+
+### How to invoke
+
+```
+/decompose-strategy
+
+Goal: <one sentence — who does what, by when, to what effect>
+Timeline: <weeks, with absolute end-date>
+Team: <names, % availability, other commitments>
+Fixed: <features/dates that cannot move>
+Flexible: <what can be cut if slipping>
+Existing assets: <what's already built>
+```
+
+### Output
+
+A decomposition that names:
+- **Bounded contexts** (BC1, BC2, …) with owner, done-criterion, file/module scope
+- **Dependency graph** — directed edges, blocking vs parallel
+- **Contract surfaces** — where one BC produces what another BC consumes
+- **Suggested ordering** — which BCs to start in W1, which in W2, etc.
+- **Decompose-vs-cut decisions** — which BCs to drop first if velocity slips
+
+### Anti-patterns
+
+- ✗ Writing stories before decomposing — you'll thrash on re-planning mid-sprint
+- ✗ Decomposing without naming dependencies explicitly — the contract surfaces are the WHOLE POINT
+- ✗ Decomposing in parallel with another stream owner without sharing the output — cross-stream contract surfaces only work if both sides see them
+
+### When to RE-decompose
+
+- After any cut-line decision (scope changed → dependency graph changed)
+- After any contract change between streams
+- After any week where actual velocity diverged > 20% from expected
 
 ---
 
