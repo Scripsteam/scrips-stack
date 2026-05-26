@@ -1,66 +1,59 @@
 # Tariq · Claude Code instructions
 
-> ⚠️ **SCOPE PIVOT — 2026-05-26** ⚠️
->
-> Samer restated Tariq's scope on 2026-05-26: **backend .NET services** —
-> `Scrips.Patient`, `Scrips.Provider` (practitioner service), `Scrips.Billing`,
-> `Scrips.PracticeManagement` / `Scrips.Practice.Aggregator`, `Scrips.QuestionBank`,
-> plus other BE services as the sprint dictates.
->
-> The body below (FE practitioner-stream in `dev-scrips-pm-react`) is **SUPERSEDED**
-> and pending Samer's rewrite. Until then:
-> - Use `/be-sprint-runner` not `admin-sprint-runner` for sprint execution
-> - Repo root is `~/scrips-repos/Scrips.<Service>/`, not `~/scrips-repos/scrips-react/`
-> - Tooling expectations: `dotnet` (.NET 8 SDK), `dotnet ef`, NuGet — not `npm`/`vite`
-> - The 4 primitives (`/goal`, worktrees, `CronCreate`, subagent-driven dev) still apply
-> - Brain-deny rules (below) still apply
->
-> ---
->
-> Role-aware addendum to canonical engineer CLAUDE conventions.
+> Role-aware addendum to each .NET service repo's own `CLAUDE.md`.
 > Lives in scrips-stack so it travels with the skills.
 >
-> **Reading order each session (post-pivot):**
-> 1. The .NET service repo's `CLAUDE.md` if present (stack, EF conventions)
-> 2. This file — scope, the 4 primitives, brain-deny rules
+> **Reading order each session:**
+> 1. The active repo's own `CLAUDE.md` (e.g. `~/scrips-repos/Scrips.Patient/CLAUDE.md`) — stack, build commands, architecture, non-negotiables, code style
+> 2. This file — your scope, the 4 primitives, brain-deny rules
 > 3. `~/.claude/skills/scrips/playbooks/24-7-engineering.md` — the daily ritual
 
 ---
 
-## Who you are in this repo
+## Who you are
 
-You are the **practitioner-stream owner** inside `dev-scrips-pm-react`.
+You are a **backend engineer** working across the Scrips .NET microservice fleet. You drive `/be-sprint-runner`, not `/admin-sprint-runner`.
 
-- Andrew owns the **Practice Management** stream — Scheduling, Patients, Billing, Org admin
-- You own the **Practitioner** stream — the vertical SOAP encounter, dynamic templates, sign-lock
-- Both streams ship from the same repo. Different routes, different folder roots.
-- Your routes: `/practitioner/*`. Your code root: `src/practitioner/` (create if absent)
-- You may mount Andrew's components from `src/{scheduling,patients,billing}/` under practitioner routes — **never copy them**. Import + compose.
+**Your active repo set (June 2026):**
+
+| Repo | What it owns | Port (REST/gRPC) |
+|---|---|---|
+| `Scrips.Patient` | Patient demographics, encounters, medications, documentation, PHI | 6001 / 5001 |
+| `Scrips.Provider` | Practitioner enrollment, credentials, specialities, clinical favourites | 6007 / 5007 |
+| `Scrips.Persons` | Person-record cross-cutting (HRN/MRN, shared identity) | varies |
+| `Scrips.Billing` | Invoice, claims, payments, accounting integrations | varies |
+| `Scrips.PracticeManagement` | Providers, practices, staff, clinical workflows | varies |
+| `Scrips.Practice.Aggregator` | Cross-service aggregator (CQRS + MediatR gateway across Patient/Scheduling/Billing/Provider/PracticeMgmt) | varies |
+| `Scrips.QuestionBank` | Question bank service | varies |
+| `Scrips.Integration.Fhir` | FHIR R4 boundary layer | varies |
+
+Cross-cutting shared libraries you'll touch: `Scrips.Core`, `Scrips.Common`.
+
+Each repo is .NET 8 LTS, Clean Architecture (API / Application / Domain / Infrastructure), EF Core 8, Dapr pub/sub via RabbitMQ, gRPC server + clients, SQL Server.
 
 ---
 
-## Your June mission
+## Your June 2026 mission
 
-Ship vertical-SOAP practitioner app to UAT sign-off with one existing client by **Friday Week 4 of June**.
+Ship backend capability that unblocks the FE streams (Andrew · PM React; Samer's separate FHIR/Person track) and lands one client to UAT by end of June. Concrete sprint shape comes from Jira — pull tickets at the start of each week with `/sprint`.
 
-| Week | Deliverable |
+| Week | Focus (default shape — refine against your Jira board) |
 |---|---|
-| W1 | EncounterInbox + FrameEncounter shell mounted under `/practitioner/encounters/` |
-| W2 | Templates engine resolves dynamic Questionnaire for one specialty · S + O blocks |
-| W3 | P1 multi-specialty templates verified for 2 specialties · O block PE complete |
-| W4 | A + P blocks · sign-lock workflow · UAT with one client signed off |
+| W1 | Land in `Scrips.Provider` + `Scrips.Patient`. Get the build green locally, run the existing tests, ship one small PR per repo to prove the loop. |
+| W2 | Move into `Scrips.Billing` + `Scrips.PracticeManagement`. Touch the aggregator (`Scrips.Practice.Aggregator`) to wire any new cross-service endpoints the FE needs. |
+| W3 | `Scrips.QuestionBank` work · FHIR integration touchpoints (`Scrips.Integration.Fhir`). Multi-tenant test coverage on anything PHI-adjacent. |
+| W4 | Stabilise, UAT support, fill test gaps in services touched in W1–W3. End of W4 = ≥3 PRs/day average, all merged, no rollback. |
 
-**Cut-line:** Ambient (PROD-541 epic) defers to Phase 2 if not deployed by end of W3. Wearables UI defers first.
+**Cut-line:** If a story can't ship in its sprint without scope creep, slice it. Don't carry across weeks. The shape above is a default — the real backlog is in Jira.
 
 ---
 
 ## What's out of your stream
 
-- **Person / Patient FHIR rewrite** — Samer's separate track. `Scrips.Persons` exists; HRN/MRN spec is PRM/3271720978. Not your sprint.
-- **`Scrips.Encounter` FHIR-native service** — Phase 2, post-UAT. Aidbox licensed dev + prod. Build seam at `EncounterTemplate.fhirBindings` so swap is mechanical.
-- **Studio admin UI** — Andrew owns. You consume via the Questionnaire contract. Contract lock end of W2.
-- **Existing UAE clients** — legacy stays. Clean slate for new clients only. No data migration.
-- **Andrew's residual Settings sprint** — PROD-762 / 764 / 787 / 788 / 790 stay with Andrew. Don't dilute focus.
+- **FE / Flutter / React** — Andrew (PM React) + the Flutter app belong to other tracks. Don't run `npm`/`vite`; you won't need `scrips-react/node_modules`.
+- **Aidbox FHIR-native rewrite** — Samer's separate track. `Scrips.Integration.Fhir` is your seam; don't migrate domain entities to FHIR resources unsolicited.
+- **DevOps / Azure infra** — `Bash(az:*)`, `Bash(kubectl:*)`, `Bash(terraform:*)` are denied in your settings. Deployment, AKS, Key Vault rotation, etc. are not your domain.
+- **Finance · investor · brain** — see deny rules below.
 
 ---
 
@@ -71,16 +64,17 @@ Full playbook: `~/.claude/skills/scrips/playbooks/24-7-engineering.md`. Short ve
 | Primitive | When |
 |---|---|
 | `/goal` | Once. Initialize your June mission on Day 1 (template on v5 deck slide 03). Wakes itself each weekday 06:00 Asia/Gaza. |
-| `git worktrees` | Every parallel task. Spawn under `~/scrips-repos/.worktrees/practitioner-<feature>/`. Clean up after merge. |
+| `git worktrees` | Every parallel task. Spawn under `~/scrips-repos/.worktrees/<repo>-<feature>/`. Clean up after merge. |
 | `CronCreate` | Every overnight. Regression sweep at 02:00, Slack DM summary at 06:00. |
 | `subagent-driven-development` | Every morning. 3–6 subagents on independent tasks. Harvest at lunch. |
+| `/be-sprint-runner` | Sprint execution. Reads Jira stories, codes each against the live BE codebase, runs unit + integration tests, opens PR. |
 
 ---
 
 ## When to use which sub-agent type
 
-- `Explore` — read-only investigation (find every callsite, map a module). Never use for implementers.
-- `Plan` — architectural planning, multi-step strategy. Use before any non-trivial implementation.
+- `Explore` — read-only investigation (find every callsite of a repository method, map a Dapr event flow, trace gRPC contracts). Never use for implementers.
+- `Plan` — architectural planning, multi-step strategy. Use before any non-trivial change that crosses two services or touches the aggregator.
 - `general-purpose` — actual implementation. Always in a worktree.
 
 ---
@@ -100,19 +94,19 @@ These tools are denied in your `~/.claude/settings.local.json` (team-setup.sh wr
 
 ---
 
-## Hygiene · daily
-
-Per Andrew's CLAUDE.md, plus practitioner-specific:
+## Hygiene · daily (BE-specific)
 
 1. **First command every session:** `/using-superpowers`
-2. **Branch format:** `feat/PROD-XXXX-practitioner-<short-description>`
+2. **Branch format:** `feat/PROD-XXXX-<service-shortname>-<short-description>` (e.g. `feat/PROD-1234-patient-encounter-export`)
 3. **PR title:** `[PROD-XXXX] <description>`
 4. **Reviewer:** Samer (while Andrew is off Tue–next-week); Andrew after that
 5. **One ticket per session.** `/clear` between unrelated tasks.
-6. **Mount, don't copy.** If a Signal DS component exists for what you need, import it. Never recreate.
-7. **Two-store rule** (from Andrew's CLAUDE.md): Zustand UI state only. TanStack Query server state only. Never mix.
-8. **FHIR seam:** Build with `fhirBindings: null` so Phase 2 swap is mechanical.
-9. **EOD:** Run `/retro`, push, update `/goal` status, schedule overnight cron.
+6. **Read the repo's CLAUDE.md before editing it.** Each service has its own non-negotiables (e.g. `Scrips.Patient` PHI logging rules). They override anything generic in this addendum.
+7. **Multi-tenant filter is non-negotiable.** Every query must filter by `TenantId`. A missing filter is a PHI-breach bug — block your own PR on it.
+8. **PHI in logs = never.** Patient IDs only. No names, DOB, SSN, diagnoses, medications in logs, error messages, or telemetry.
+9. **EF Core migrations:** run from the repo root, use the repo's documented project/startup-project pair (each repo's CLAUDE.md spells it out). Commit migration files alongside the code change.
+10. **Tests:** every PR adds or updates `tests/<Repo>.UnitTests`. CQRS handlers and repository methods both need coverage.
+11. **EOD:** Run `/retro`, push, update `/goal` status, schedule overnight cron.
 
 ---
 
@@ -121,9 +115,9 @@ Per Andrew's CLAUDE.md, plus practitioner-specific:
 | When | Signal off-track if … |
 |---|---|
 | End Day 5 | First PR not open · no worktrees spawned · no `/goal` active |
-| End Week 2 | Architecture deferred to Samer · &lt; 3 PRs/day average · no overnight cron live |
-| End Week 3 | Templates not rendering · 2 specialties not covered · pace stuck at 1–2 PRs/day |
-| End Week 4 | UAT failed · scope cut below the demo · client sign-off not captured |
+| End Week 2 | No cross-service work (Patient + Provider + aggregator) shipped · &lt; 2 PRs/day average · no overnight cron live |
+| End Week 3 | Tests not added with each PR · TenantId filter audit not run on touched files · pace stuck at 1–2 PRs/day |
+| End Week 4 | UAT failed for any service in your set · rollbacks accumulated · scope cut without slice-and-ship discipline |
 
 Calibration calls are 20 min each. Friday EOD.
 
@@ -133,19 +127,21 @@ Calibration calls are 20 min each. Friday EOD.
 
 | Symptom | What broke | Fix |
 |---|---|---|
-| Claude says "task complete" but tests fail | Verification skipped | `/verification-before-completion` then demand evidence |
+| Claude says "task complete" but `dotnet test` fails | Verification skipped | `/verification-before-completion` then demand evidence |
 | Path doesn't exist | Hallucinated file | `ls` the parent. Re-ground in real source |
 | Subagents return identical output | Sequential call, not parallel | Use one message with multiple Agent tool blocks |
 | Stuck in loop on wrong approach | Lost the thread | `/clear` then re-state goal with full context |
 | Wrong skill routes | Missing meta-protocol | Re-invoke `/using-superpowers` |
 | `/goal` lost continuity | Compaction without summarize | Re-invoke with state from `~/claude-os/daily-activity-log.md` |
+| EF migration doesn't apply | Wrong `--project` / `--startup-project` pair | Read the repo's CLAUDE.md "Build and Run" section — each repo has its own pair |
+| `dotnet build` fails on a fresh clone | Missing NuGet feed / Azure DevOps creds | Repo's ONBOARDING.md has the auth steps; ping Samer if still stuck after 10 min |
 
 ---
 
 ## Who to ping
 
-- **Samer · PM + architecture** — product calls, access, architecture decisions, contract lock with Andrew
-- **Andrew · Backend + PM stream owner** — Studio admin UI, ambient deployment, API behavior · **off Tue this week through next**
+- **Samer · PM + architecture** — product calls, access, architecture decisions, contract lock with FE streams, Aidbox/FHIR boundary questions
+- **Andrew · FE owner + ex-BE lead** — questions about Dapr topics, gRPC contracts the FE consumes, deployment patterns · **off Tue this week through next**
 - **Claude · the team** — everything else · `/using-superpowers` first
 
 ---
@@ -153,15 +149,14 @@ Calibration calls are 20 min each. Friday EOD.
 ## Linked artifacts
 
 - **v5 deck (this onboarding):** `~/claude-os/artifacts/2026-05-25-tariq-onboarding-v5.html`
-- **v4.3 deck (still canonical):** `~/claude-os/artifacts/2026-05-19-tariq-onboarding-v4-3.html`
 - **24/7 playbook:** `~/.claude/skills/scrips/playbooks/24-7-engineering.md`
 - **Sprint simulator:** `~/.claude/skills/sprint-simulator/SKILL.md`
+- **BE sprint runner:** `~/.claude/skills/be-sprint-runner/SKILL.md` (your primary daily driver)
+- **Port spec (if you ever do FE-port work):** `~/.claude/skills/port-spec/SKILL.md`
 - **Team setup:** `~/.claude/skills/scrips/team-setup.sh`
 - **Readiness check:** `~/.claude/skills/scrips/readiness-check.sh`
-- **Upgrade plan (Samer's view):** `~/claude-os/artifacts/2026-05-25-andrew-tariq-claude-upgrade-plan.html`
-- **Andrew's canonical CLAUDE.md:** `~/scrips-repos/scrips-react/CLAUDE.md`
-- **Scrips Agentic OS project hub** (you don't have access; for reference only): the upgrade you're using is step 12 of the build order
+- **Per-repo CLAUDE.md** — read first in any session: `~/scrips-repos/<Repo>/CLAUDE.md`
 
 ---
 
-**Origin:** 2026-05-25 · [CLAUDE] · status-draft pending Samer sign-off.
+**Origin:** 2026-05-25 · [CLAUDE] · BE-scope rewrite 2026-05-26 after Samer restated Tariq's scope as backend .NET services (Patient · Provider · Billing · PracticeManagement · QuestionBank · cross-cutting). Sprint-shape weekly table is a scaffold; refine against the Jira backlog at Sprint Planning.
