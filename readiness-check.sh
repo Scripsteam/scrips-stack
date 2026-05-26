@@ -52,7 +52,16 @@ fi
 
 # ─────────────────────────────────────────────────────────────
 section "3. Repos in ~/scrips-repos/"
-REPOS=(scrips-react scrips-signal-ds scrips-stack scrips_msp1_pa scrips_msp1_pm scrips_msp1_flutter_shared Scrips.Patient Scrips.Persons)
+REPOS=(
+  # universal
+  scrips-stack
+  # FE / Flutter (only needed for FE-stream engineers)
+  scrips-react scrips-signal-ds scrips_msp1_pa scrips_msp1_pm scrips_msp1_flutter_shared
+  # BE .NET services
+  Scrips.Patient Scrips.Persons Scrips.Provider Scrips.Billing
+  Scrips.PracticeManagement Scrips.Practice.Aggregator Scrips.QuestionBank
+  Scrips.Core Scrips.Common Scrips.Integration.Fhir
+)
 REPO_BASE="$HOME/scrips-repos"
 if [ ! -d "$REPO_BASE" ]; then
   bad "$REPO_BASE does not exist — clone repos here, NOT OneDrive"
@@ -129,7 +138,22 @@ if [ -d "$REPO_BASE/scrips-react" ]; then
 fi
 
 # ─────────────────────────────────────────────────────────────
-section "7. Atlassian access"
+section "7. .NET / dotnet (BE engineers)"
+if command -v dotnet >/dev/null 2>&1; then
+  ok "dotnet installed ($(dotnet --version 2>/dev/null))"
+  # Check at least one BE repo is present + restorable
+  for be_repo in Scrips.Common Scrips.Core Scrips.Patient; do
+    if [ -d "$REPO_BASE/$be_repo" ]; then
+      ok "$be_repo present (run 'dotnet restore' inside it before first build)"
+      break
+    fi
+  done
+else
+  warn "dotnet not installed (only needed for BE engineers — install .NET 8 SDK from dotnet.microsoft.com)"
+fi
+
+# ─────────────────────────────────────────────────────────────
+section "8. Atlassian access"
 if command -v atlassian-cli >/dev/null 2>&1 || [ -f "$HOME/.atlassian-mcp.toml" ] || grep -q "atlassian" "$CLAUDE_JSON" 2>/dev/null; then
   ok "Atlassian access configured"
 else

@@ -1,12 +1,28 @@
-# Tariq · Practitioner stream · Claude Code instructions
+# Tariq · Claude Code instructions
 
-> Role-aware addendum to the canonical `dev-scrips-pm-react/CLAUDE.md` (Andrew's).
-> Lives in scrips-stack so it travels with the skills. Tariq references this from
-> any session in `~/scrips-repos/scrips-react/` (the local clone of dev-scrips-pm-react).
+> ⚠️ **SCOPE PIVOT — 2026-05-26** ⚠️
 >
-> **Reading order each session:**
-> 1. `~/scrips-repos/scrips-react/CLAUDE.md` — Andrew's canonical PM-stream doc (stack, conventions, Signal DS rules, two-store rule)
-> 2. This file — your practitioner-stream scope, the 4 primitives, brain-deny rules
+> Samer restated Tariq's scope on 2026-05-26: **backend .NET services** —
+> `Scrips.Patient`, `Scrips.Provider` (practitioner service), `Scrips.Billing`,
+> `Scrips.PracticeManagement` / `Scrips.Practice.Aggregator`, `Scrips.QuestionBank`,
+> plus other BE services as the sprint dictates.
+>
+> The body below (FE practitioner-stream in `dev-scrips-pm-react`) is **SUPERSEDED**
+> and pending Samer's rewrite. Until then:
+> - Use `/be-sprint-runner` not `admin-sprint-runner` for sprint execution
+> - Repo root is `~/scrips-repos/Scrips.<Service>/`, not `~/scrips-repos/scrips-react/`
+> - Tooling expectations: `dotnet` (.NET 8 SDK), `dotnet ef`, NuGet — not `npm`/`vite`
+> - The 4 primitives (`/goal`, worktrees, `CronCreate`, subagent-driven dev) still apply
+> - Brain-deny rules (below) still apply
+>
+> ---
+>
+> Role-aware addendum to canonical engineer CLAUDE conventions.
+> Lives in scrips-stack so it travels with the skills.
+>
+> **Reading order each session (post-pivot):**
+> 1. The .NET service repo's `CLAUDE.md` if present (stack, EF conventions)
+> 2. This file — scope, the 4 primitives, brain-deny rules
 > 3. `~/.claude/skills/scrips/playbooks/24-7-engineering.md` — the daily ritual
 
 ---
