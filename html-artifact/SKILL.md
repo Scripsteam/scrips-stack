@@ -107,7 +107,7 @@ Default channel for the link: Slack DM to Samer (UANT64XRQ in CoS Briefing works
 ## Visual taste
 
 Hard rules from memory:
-- **Light theme by default** (`feedback_no_dark_theme_default.md`) — light backgrounds, strong typographic hierarchy, card-based ADHD-friendly layout. Dark mode is opt-in only.
+- **Light theme by default** (`feedback_no_dark_theme_default.md`) — light backgrounds, strong typographic hierarchy, card-based, high-scan-speed layout. Dark mode is opt-in only.
 - **No internal-only Scrips names in external artifacts** (`feedback_no_internal_names_in_external_artifacts.md`).
 - **No "Reveal" on external surfaces** — translate to "Story / Story stage" (`feedback_avoid_reveal_term_external.md`).
 - **Consumer surface is "consumer / citizen", not "patient app"** unless clinical-episode context (`feedback_consumer_citizen_over_patient.md`).
