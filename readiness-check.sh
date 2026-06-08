@@ -68,14 +68,18 @@ for s in "${ENG_SKILLS[@]}"; do
 done
 echo "  → smoke/stress test: in a Claude session type '/' (or run /find-skills) and confirm each command above is invocable, not just present on disk."
 
-# Methodology collection (superpowers): present in the repo under methodology/<name>/,
-# surfaced via the using-superpowers framework rather than flat slash commands.
-if [ -d "$SKILLS_DIR/scrips/methodology" ]; then
-  n=$(ls -1 "$SKILLS_DIR/scrips/methodology" 2>/dev/null | wc -l | tr -d ' ')
-  ok "methodology collection reachable via umbrella ($n skills)"
-else
-  warn "methodology collection not reachable — confirm the scrips umbrella link + how superpowers skills are surfaced (open question for Samer)"
-fi
+# Methodology collection — now installed flat as slash commands (setup scans methodology/*/SKILL.md).
+METHODOLOGY_SKILLS=(brainstorming dispatching-parallel-agents executing-plans \
+  finishing-a-development-branch receiving-code-review requesting-code-review \
+  subagent-driven-development systematic-debugging test-driven-development \
+  using-git-worktrees verification-before-completion writing-plans)
+for s in "${METHODOLOGY_SKILLS[@]}"; do
+  if [ -f "$SKILLS_DIR/$s/SKILL.md" ]; then
+    ok "$s skill present"
+  else
+    bad "$s skill missing — re-run scrips-stack setup"
+  fi
+done
 
 # ─────────────────────────────────────────────────────────────
 section "3. Repos in ~/scrips-repos/"

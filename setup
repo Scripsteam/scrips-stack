@@ -28,10 +28,15 @@ linked=0
 replaced=0
 skipped=0
 linked_names=()
-for skill_md in "$SCRIPT_DIR"/*/SKILL.md; do
+# Top-level command skills + the methodology/ collection (one level deeper).
+# Both register flat as ~/.claude/skills/<name> so every one is a slash command.
+for skill_md in "$SCRIPT_DIR"/*/SKILL.md "$SCRIPT_DIR"/methodology/*/SKILL.md; do
+  [ -e "$skill_md" ] || continue
   name=$(basename "$(dirname "$skill_md")")
+  # skip the methodology/ umbrella dir itself if it ever gets a top-level SKILL.md
+  [ "$name" = "methodology" ] && continue
   target="$SKILLS_DIR/$name"
-  desired="$SCRIPT_DIR/$name"
+  desired="$(dirname "$skill_md")"
 
   if [ -e "$target" ] && [ ! -L "$target" ]; then
     echo "  skip $name — non-symlink already exists at $target"
