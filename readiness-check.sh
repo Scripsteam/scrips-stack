@@ -51,6 +51,33 @@ else
 fi
 
 # ─────────────────────────────────────────────────────────────
+section "2b. Engineering skills (design system · SDLC · disciplines)"
+# The full engineering toolset the team uses day to day. These ship as
+# top-level <name>/SKILL.md so the setup glob installs them as slash commands.
+ENG_SKILLS=(html-artifact design-to-dev-pipeline scrips-design-sdlc \
+  signal-ds-graduation signal-ds-judge signal-system-sweep \
+  figma-design-sweep figma-doc-sync ds-parity-maintenance \
+  sdlc-handoff source-of-truth-discipline operational-protocols \
+  decision-lock-hygiene slide-library)
+for s in "${ENG_SKILLS[@]}"; do
+  if [ -f "$SKILLS_DIR/$s/SKILL.md" ]; then
+    ok "$s skill present"
+  else
+    bad "$s skill missing — re-run scrips-stack setup"
+  fi
+done
+echo "  → smoke/stress test: in a Claude session type '/' (or run /find-skills) and confirm each command above is invocable, not just present on disk."
+
+# Methodology collection (superpowers): present in the repo under methodology/<name>/,
+# surfaced via the using-superpowers framework rather than flat slash commands.
+if [ -d "$SKILLS_DIR/scrips/methodology" ]; then
+  n=$(ls -1 "$SKILLS_DIR/scrips/methodology" 2>/dev/null | wc -l | tr -d ' ')
+  ok "methodology collection reachable via umbrella ($n skills)"
+else
+  warn "methodology collection not reachable — confirm the scrips umbrella link + how superpowers skills are surfaced (open question for Samer)"
+fi
+
+# ─────────────────────────────────────────────────────────────
 section "3. Repos in ~/scrips-repos/"
 REPOS=(
   # universal
