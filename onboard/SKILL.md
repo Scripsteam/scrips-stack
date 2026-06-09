@@ -27,15 +27,33 @@ You are guiding a new Scrips engineer through their first days on the team. **Yo
    single source for the stack/repo table — never reproduce a stack table from
    this skill's own memory.
 
-## Operating principle
+## The objective: first real PR within 48 hours
 
-**Day 1–2 = build Claude proficiency through real exercises.** The engineer should not be writing production code yet. They should be learning to direct Claude.
+**This is the target the whole skill serves.** Not "first PR by end of week" —
+**first merged-or-open PR within 48 hours of starting.** What makes 48h possible
+is that we *hand* the engineer the team's memory + harness + kernel instead of
+making them learn the codebase by reading it for a week:
 
-**Day 3–5 = first real deliverable, using Claude as the engine.** First PR by end of week.
+- **Kernel** — `scrips-stack/CLAUDE.md` grounds their agent in the real repo map, deploy path, conventions (installed by `./setup`).
+- **Shared memory** — `LESSONS.md` gives them the team's hard-won lessons (auth quirks, CORS-per-service, DS tokens, "green tests can certify a dead core") on day one.
+- **Harness** — the DS-color gate, destructive-bash gate, and FHIR advisor catch the classic mistakes automatically (installed by `./setup`).
+
+So a grounded agent + guardrails + a scoped ticket = a real PR in two days, not two weeks. The engineer's job is to **direct and judge**, not to memorize the codebase.
+
+### The 48-hour arc
+
+| Window | Goal |
+|---|---|
+| **Hour 0–4 — Parity** | Clone repos, `./setup` (skills + harness + kernel + lessons), readiness check green, mental-model handoff, run a dev server + Storybook. Their Claude is now grounded. |
+| **Hour 4–24 — Proficiency on a real slice** | Exercises 1–3 against real files (orient, read a real module, the skill/port-flow drill) — *interleaved with* starting the first ticket, not before it. |
+| **Hour 24–48 — Ship** | One small, scoped ticket end-to-end (the Andrew model: a role-gate fix, a parity-polish slice, one component port + Storybook story). Plan → implement → **verify with a screenshot** → `/ship`. First PR open, linked to its `PROD-XXXX`. |
+
+If Claude Code experience is None, the engineer will want to skip the parity setup
+and start typing code — don't let them. The 48h only works *because* the agent is
+grounded; an ungrounded agent (the stale-kernel failure) burns the two days
+hallucinating. Parity first, always.
 
 **Week 2+ = full velocity, Claude-driven.**
-
-The reason this matters: an engineer who skips the Claude-foundation week and jumps into the codebase will type code like they did at their last job. They'll be 0.3x velocity for months. An engineer who invests two days in Claude proficiency will be 0.8x velocity in two weeks.
 
 ## Step 0 — Identify who you're onboarding
 

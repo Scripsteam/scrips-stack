@@ -12,6 +12,13 @@ docs end up with invented repos, wrong hosting, and rejected colors).
 > Counts ("2,500 units", "21 modules"), file paths, and directory names must be
 > produced by actually reading the tree, not imagined.
 
+> **Shared memory — read `LESSONS.md`.** The team's accumulated hard-won
+> knowledge (auth quirks, the CORS-per-service pattern, DS token rules, the deploy
+> path, "green tests can certify a dead core") lives in `LESSONS.md`. Read it
+> before substantive work — it's grounding you'd otherwise relearn by breaking
+> something. When you learn something durable, capture it with **`/lesson`** so it
+> compounds instead of living in one person's head.
+
 ---
 
 ## Repo map (source of truth — local dir ≠ GitHub repo name)
@@ -124,6 +131,7 @@ tool as your FIRST action — don't answer directly or use other tools first.
 - Security audit / OWASP / DB access control → **cso**
 - Save progress / checkpoint / resume later → **checkpoint**
 - Onboard a new engineer / "onboard me" → **onboard**
+- PR merged / bug root-caused / "we shouldn't relearn this" / "capture this" → **lesson** (append to `LESSONS.md`, PR it)
 
 Methodology (auto-invoke without being asked):
 - New feature/component/behavior described → **brainstorming** FIRST
@@ -141,7 +149,9 @@ Methodology (auto-invoke without being asked):
 Installed flat at `~/.claude/skills/<name>/` by `./setup` (the umbrella link
 `~/.claude/skills/scrips/` also resolves for reference).
 
-Scrips: `/ship` · `/review` · `/investigate` · `/sprint` · `/design-sync` · `/qa` · `/brief` · `/retro` · `/cso` · `/checkpoint` · `/onboard` · `/synth` · `/admin-sprint-runner` · `/decompose-strategy`
+Scrips: `/ship` · `/review` · `/investigate` · `/sprint` · `/design-sync` · `/qa` · `/brief` · `/retro` · `/cso` · `/checkpoint` · `/onboard` · `/synth` · `/admin-sprint-runner` · `/decompose-strategy` · `/lesson`
+
+**Harness (the gates the team runs):** `harness/install-harness.sh` (run by `./setup`) installs the DS-color gate (blocks rejected hex like `#0076F8` in code), the destructive-bash gate, and the FHIR architecture advisor into `~/.claude/`. Same guardrails on every dev's machine.
 
 Methodology (`~/.claude/skills/scrips/methodology/`): `/brainstorming` · `/writing-plans` · `/test-driven-development` · `/systematic-debugging` · `/verification-before-completion` · `/using-git-worktrees` · `/subagent-driven-development` · `/executing-plans` · `/dispatching-parallel-agents` · `/requesting-code-review` · `/receiving-code-review` · `/finishing-a-development-branch`
 
