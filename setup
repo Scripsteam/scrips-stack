@@ -61,6 +61,15 @@ printf '{"installed":"%s","source":"%s"}\n' \
   "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$SCRIPT_DIR" \
   > "$HOME/.scrips-stack/config.json"
 
+# Install the engineering harness (DS-color gate, destructive-bash gate, FHIR
+# advisor) so every dev runs the same guardrails. Backs up settings.json and
+# appends only hooks not already present. Skip with SKIP_HARNESS=1.
+if [ -z "$SKIP_HARNESS" ] && [ -f "$SCRIPT_DIR/harness/install-harness.sh" ]; then
+  echo ""
+  echo "Installing engineering harness (hooks + FHIR advisor)..."
+  bash "$SCRIPT_DIR/harness/install-harness.sh" || echo "  (harness install skipped/failed — non-fatal)"
+fi
+
 echo ""
 echo "scrips-stack installed: $linked linked ($replaced replaced from another collection), $skipped skipped."
 [ -n "$backup_path" ] && echo "Backup of previous scrips dir: $backup_path (delete when satisfied)"
@@ -83,7 +92,8 @@ done
 
 echo ""
 if [ "$fail" -eq 0 ]; then
-  echo "All skills registered. In Claude Code: /ship /review /investigate /sprint /design-sync /qa /brief /retro /cso /checkpoint /admin-sprint-runner /onboard /synth"
+  echo "All skills registered. In Claude Code: /ship /review /investigate /sprint /design-sync /qa /brief /retro /cso /checkpoint /admin-sprint-runner /onboard /synth /lesson /decompose-strategy"
+  echo "Shared memory: read LESSONS.md (the team's accumulated lessons). Capture new ones with /lesson."
 else
   echo "WARNING: $fail skill(s) not reachable. See above."
   exit 1
