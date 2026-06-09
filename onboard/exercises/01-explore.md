@@ -17,13 +17,11 @@ cd ~/scrips-repos/scrips-react
 claude
 ```
 
-At the prompt, type:
+(Opening Claude in the repo auto-loads the scrips-stack grounding kernel — no
+"turn it on" command needed. If Claude seems ungrounded about the repos, your
+scrips-stack install is missing: run `./setup` from the scrips-stack repo.)
 
-```
-/using-superpowers
-```
-
-Then ask Claude these questions in order:
+Ask Claude these questions in order:
 
 1. "Walk me through the Scrips repo landscape. What repos exist, what's each one for, and which ones interact with each other?"
 
