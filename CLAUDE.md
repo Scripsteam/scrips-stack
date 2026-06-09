@@ -21,6 +21,29 @@ docs end up with invented repos, wrong hosting, and rejected colors).
 
 ---
 
+## Canonical source map — consult the authority, don't grep-and-guess
+
+The most common agent error is a confident wrong answer to "where does X live / what's
+the reference / does Z exist", produced by searching one convenient place and stopping.
+For these questions, go to the NAMED authority below. State your search SCOPE; never
+conclude "doesn't exist" from a narrow search.
+
+| Question | Authority (consult this, not a sibling repo's filesystem) |
+|---|---|
+| Product UI design / components for ANY surface (practice, **practitioner**, patient) | **Signal DS**: graduated components in `scrips-signal-ds/src/{atoms,molecules,organisms,templates}`, rendered in Storybook (`signal-ds.vercel.app/storybook`), Figma = "Scrips Design System". A sibling React app is NOT the design reference. |
+| What's already built vs a genuine gap | `scrips-signal-ds/coverage-matrix.md` |
+| DS tokens / locked decisions | `scrips-signal-ds/tokens/design-tokens.ts` + `DESIGN-STATE.md` |
+| Repo map / what each repo is | this file |
+| Team engineering lessons | `LESSONS.md` |
+
+**Porting rule:** the practitioner clinical/encounter surface is ALREADY graduated into
+Signal DS (`EncounterStep`, `VitalCard`, `PatientSummaryPanel`, 18 chart-tab organisms…,
+all exported from `@scripsteam/scrips-signal-ds`). **Compose these — do not hand-port them
+from Flutter.** Hand-port only what `coverage-matrix.md` shows as not yet built. Check
+Signal DS FIRST.
+
+---
+
 ## Repo map (source of truth — local dir ≠ GitHub repo name)
 
 All repos live at `~/scrips-repos/`. **The local folder name often differs from
