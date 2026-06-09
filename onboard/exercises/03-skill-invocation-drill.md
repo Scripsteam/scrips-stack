@@ -12,17 +12,22 @@ Practice invoking 5 key skills against safe targets so you know what each does b
 
 For each skill below, invoke it and observe Claude's behavior. Don't actually commit anything — this is a dry run.
 
-### Drill A — /port-spec
+### Drill A — port planning, grounded on the real Flutter source
 
-In `scrips-react`:
+There is no magic "port" command — a good port is: **read the real Flutter
+widget → plan the React port → implement → verify.** Practice the planning step
+on a real file. In `scrips-practitioner-react`:
 
 ```
-/port-spec
+Read this Flutter widget as the spec (don't edit anything):
+~/scrips-repos/scrips_msp1_flutter_shared/...  (ask Claude to find a small encounter widget)
+Plan its port to a React component using Signal DS. Show me the plan only —
+the component shape, the props, the Signal DS components it maps to, the Storybook story.
 ```
 
-When Claude asks what you're porting, say: "I'm exploring — show me what /port-spec would do if I were porting the Flutter `encounter_review_of_system` module to React."
-
-Watch Claude dispatch 5 parallel subagents (Figma A, Figma B, Backend, Confluence+brain, LIVE FE audit). You don't have to run the full thing — just see the pattern.
+Watch Claude read the actual `.dart` source (not guess), then produce a plan
+grounded in it. This is the real porting flow you'll use daily. (`/writing-plans`
+formalizes the planning step when the slice is bigger.)
 
 ### Drill B — /writing-plans
 
@@ -85,15 +90,15 @@ After 30 minutes:
 - [ ] You can explain in one sentence what each of the 5 skills does
 - [ ] You can name which skill to invoke for: porting a screen, planning a feature, fixing a bug, before opening a PR, after implementing a UI component
 - [ ] You've seen Claude refuse to guess (in /systematic-debugging) and understand why that's the point
-- [ ] You've seen Claude dispatch subagents (in /port-spec) and understand parallel exploration
+- [ ] You've seen Claude read real source before planning, and understand why grounding beats guessing
 
 ## Self-check question
 
-> "It's Monday morning. You pick up PROD-762 (port the Practitioner Schedule sub-tab). What's the FIRST skill you invoke, and why?"
+> "It's Monday morning. You pick up a ticket to port the Practitioner Schedule sub-tab. What's your FIRST move, and why?"
 
-Answer: `/port-spec` — because you're porting a live feature. Jira is a pointer, not a spec. /port-spec produces the spec.
+Answer: **Have Claude read the real Flutter source as the spec, then plan the port** — Jira is a pointer, not a spec, and the Flutter `.dart` is the source of truth for behavior. Plan before code; `/writing-plans` for anything non-trivial.
 
-If you said "/sprint" — re-read the /port-spec description. Sprint is for execution. Spec comes first.
+If you said "just start coding" — re-read. The spec comes from the real source, not from memory; that's what stops the port from drifting.
 
 ## When you finish
 

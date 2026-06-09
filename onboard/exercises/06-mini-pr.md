@@ -28,24 +28,20 @@ git checkout -b feat/PROD-789-staff-edit-polish
 claude
 ```
 
-In Claude:
-```
-/using-superpowers
-```
+Open Claude in the repo — the scrips-stack routing kernel loads automatically;
+you don't type a command to "turn it on."
 
-### Step 3 — Plan with /port-spec or /writing-plans (20 min)
+### Step 3 — Plan (20 min)
 
-If you're porting (Flutter → React), use:
-```
-/port-spec
-```
-Provide the Jira ticket URL. Let Claude run the 5-parallel discovery.
-
-If you're greenfield, use:
+If you're porting (Flutter → React): point Claude at the **real Flutter source**
+as the spec and ask it to plan the port (it reads the `.dart`, you review the
+plan). For anything non-trivial, formalize with:
 ```
 /writing-plans
 ```
-Give Claude the AC. Let it produce a step-by-step plan.
+
+If you're greenfield: `/writing-plans` with the acceptance criteria. Let it
+produce a step-by-step plan.
 
 **STOP and review the plan.** Don't proceed until you can answer:
 - Does this match the AC?
@@ -121,7 +117,7 @@ After 2 hours:
 
 ## What "felt the workflow click" means
 
-There's a moment in exercise 6 where you stop thinking about which skill to invoke and just... type the natural thing. Claude routes to the right skill automatically because you set up the session with `/using-superpowers`.
+There's a moment in exercise 6 where you stop thinking about which skill to invoke and just... type the natural thing. Claude routes to the right skill automatically — the scrips-stack kernel does that for you.
 
 When that happens, you're a Claude super-user. The workflow is yours.
 
@@ -130,13 +126,12 @@ When that happens, you're a Claude super-user. The workflow is yours.
 > "Walk me through the workflow from picking up a Jira ticket to opening a PR, listing every skill you'd invoke and what each produces."
 
 Expected answer:
-1. `/using-superpowers` — load meta-protocol
-2. `/port-spec` or `/writing-plans` — produce spec
-3. `/sprint` — execute
-4. `/systematic-debugging` — when stuck
-5. `/review` — self-audit
-6. `/ship` — create PR
-7. `/session-capture` — save learnings
+1. **Read the real source** (Flutter `.dart` for a port) + `/writing-plans` — produce the spec/plan
+2. `/sprint` — execute
+3. `/systematic-debugging` — when stuck
+4. `/review` — self-audit
+5. `/verification-before-completion` — prove it works (screenshot/test output) before "done"
+6. `/ship` — create PR (branch + commit conventions, Jira link)
 
 If your answer is missing any of these, re-do the exercise. The workflow has to be muscle memory before week 2.
 

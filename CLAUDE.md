@@ -1,95 +1,155 @@
-# scrips-stack — Claude Code Instructions
+# scrips-stack — Claude Code Instructions (team grounding kernel)
 
-## Stack context
+This file is the shared grounding kernel for every Scrips engineer's Claude. Its
+job is to keep the agent **accurate** about what the repos are, where things
+live, and how we ship — so it never has to guess (guessing is how onboarding
+docs end up with invented repos, wrong hosting, and rejected colors).
 
-You are working on the Scrips Healthcare codebase. Key facts:
+> **Anti-drift principle (read first).** Do NOT state a repo's purpose, a token
+> value, a deploy target, or a file path from memory or inference. Verify against
+> the source of truth below, or inspect the repo (`ls`, `Read`, `git remote -v`).
+> If you cannot verify a fact, say so — never fabricate a plausible answer.
+> Counts ("2,500 units", "21 modules"), file paths, and directory names must be
+> produced by actually reading the tree, not imagined.
 
-- **Mobile:** Flutter/Dart — repo `scrips_msp1_flutter_shared`, `Scrips.AppointmentScheduling`
-- **API:** .NET C# — repo `scrips_msp1_pm`
-- **Admin:** React + TypeScript — repo `scrips-react`
-- **Design system:** Signal DS — repo `scrips-signal-ds`, deployed at `signal-ds.vercel.app`
-- **Database:** SQL Server (current) — possible PostgreSQL migration in future
-- **Project management:** Jira (project key: DEV), Confluence
-- **Design:** Figma (Signal DS file key: `LXuJFuGMJ0PXjBbDDCP3xd3K`)
+---
 
-## Signal DS tokens (always use these, never invent)
+## Repo map (source of truth — local dir ≠ GitHub repo name)
 
-| Token | Value | Use |
-|-------|-------|-----|
-| Primary blue | `#0076F8` | CTAs, active states, links |
-| Dark text | `#151B20` | Body text, headings |
-| Background | `#F7F9FA` | Page background |
-| Surface | `#FFFFFF` | Cards, panels |
-| Border | `#EFEEEE` | Dividers, card borders |
-| Muted | `#809099` | Secondary text, labels |
-| Error | `#CD3232` | Errors, destructive |
-| Warning | `#E5A000` | Warnings, alerts |
-| Success | `#41AE55` | Confirmations, success |
+All repos live at `~/scrips-repos/`. **The local folder name often differs from
+the GitHub repo name — run `git remote -v` before any `gh -R` call.**
 
-## Git conventions
+### Product surfaces (what we build)
+| Local dir | GitHub repo | What it is | Stack |
+|---|---|---|---|
+| `scrips-react` | `Scripsteam/dev-scrips-pm-react` | **Practice Management** web app (clinic/operational). Ground-up React rewrite, Flutter as spec. | React 19 · TS · Vite · Tailwind 4 · Signal DS |
+| `scrips-practitioner-react` | `Scripsteam/scrips-practitioner-react` | **Practitioner** web app (doctor/clinical). Active Flutter→React port. | React 19 · TS · Vite · Tailwind 4 · Signal DS |
+| `scrips-signal-ds` | `Scripsteam/scrips-signal-ds` | **Signal Design System** — published as `@scripsteam/scrips-signal-ds`. | React · tokens · Storybook |
 
-- Branch format: `{type}/{jira-ticket}-{short-description}` (e.g. `feat/DEV-2270-admin-department-mgmt`)
-- Commit format: `[DEV-XXXX] Short description` (imperative, present tense)
-- PR title: `[DEV-XXXX] Feature description`
-- Always link Jira ticket in PR body
-- Reviewers: Andrew (@Scripsteam/eng) unless specified
+### Port sources (Flutter — the spec for the React rewrite)
+| Local dir | What it is |
+|---|---|
+| `scrips_msp1_pm` | Flutter **Practice Management** mobile app |
+| `scrips_msp1_pa` | Flutter **Practitioner** app — the PA-React port source |
+| `scrips_msp1_flutter_shared` | Shared Flutter code — source of truth for shared widgets/logic |
+
+### Backend (.NET C# microservices — the `Scrips.*` family)
+The API is **not** a single repo. It is a family of .NET microservices, each its
+own `Scrips.<Service>` repo, deployed to AKS. Key ones: `Scrips.Patient`,
+`Scrips.PracticeManagement`, `Scrips.Identity`, `Scrips.AppointmentScheduling`,
+`Scrips.Billing`, `Scrips.Master`, `Scrips.Persons`, `Scrips.Provider`,
+`Scrips.Organization`, `Scrips.Notifications`, `Scrips.RuleEngine`. They surface
+behind one gateway host, `dev-api.scrips.com`, routed per-path by the dev ingress.
+
+> Common mislabels to avoid: `scrips-react` is **PM, not "admin"**.
+> `scrips_msp1_pm` is the **Flutter mobile app, not the backend**. The backend is
+> the `Scrips.*` services.
+
+---
+
+## Hosting & deploy (NOT Vercel for product apps)
+
+Product apps (the React web apps + the .NET services) deploy via **GitHub Actions
+→ Azure Container Registry (`scripsdevacr`) → AKS (`ScripsDevAKS`, namespace
+`dev`)**, served behind the shared nginx ingress at `dev-*.scrips.com`. Vercel is
+for **external portals only** (e.g. signal-ds.vercel.app, marketing/portal
+surfaces) — never the product apps.
+
+- PM web app → `https://dev-practice-v2.scrips.com`
+- Practitioner web app → `https://dev-practitioner-v2.scrips.com`
+- API gateway → `https://dev-api.scrips.com`
+
+Database: SQL Server. Auth: IdentityServer (Skoruba/IS4) JWTs — tokens are
+**audience-less**, tenancy rides `orgId`; never assume an `aud` claim.
+
+---
+
+## Signal DS — read the live source, never hardcode hex
+
+Signal DS ships as the versioned package **`@scripsteam/scrips-signal-ds`** (GitHub
+Packages, Scripsteam-private). Consume it; don't reinvent UI.
+
+```tsx
+import { Button, StatusChip } from '@scripsteam/scrips-signal-ds';
+import '@scripsteam/scrips-signal-ds/tokens.css';   // CSS variables — USE THESE
+import '@scripsteam/scrips-signal-ds/fonts.css';
+```
+
+**Never hardcode a hex value — reference the token.** Raw hex literals are exactly
+what drifts when a token moves. The canonical primary blue is **`#005FD4`**
+(`--color-brand-primary` / `--color-interactive-default`, DS-015). The older
+`#0076F8` is **REJECTED** — if you see it, it's stale.
+
+Canonical references, in order:
+1. **Storybook** — https://signal-ds.vercel.app/storybook (the visual contract)
+2. **`Scripsteam/scrips-signal-ds`** — `DESIGN-STATE.md` (locked DS-NNN decisions), `tokens/design-tokens.ts` (hex), `contracts/*.json` (per-component)
+3. **Installed exports** — `node_modules/@scripsteam/scrips-signal-ds/dist/index.d.ts` (read props before composing)
+4. **External-AI mirrors** — tokens.json / figma-variables.json / ai-tools-brief.html at signal-ds.vercel.app
+
+If a component is missing, open a PR against `Scripsteam/scrips-signal-ds` — do not
+author it inside a consumer app's domain folders.
+
+## Figma
+
+Canonical design file is the **"Scrips Design System"** space (30 pages, 268
+components). **Refer to it by name, never paste the file key.** Open via Figma
+Desktop or the figma MCP; do not cite a raw key in any message or doc.
+
+---
+
+## Git & Jira conventions
+
+- **Jira project key: `PROD`.** Tickets are `PROD-XXXX`. (Not `DEV-`.)
+- Branch: `feat/PROD-XXXX-short-description` (or `fix/`, `chore/`)
+- Commit: `[PROD-XXXX] Imperative description`
+- PR: title `[PROD-XXXX] …`, body links the Jira ticket. Every PR links a ticket — no exceptions.
+- DS-first: always Signal DS components; never invent UI; never hardcode colors.
+- No `console.log` in commits. One ticket per session; `/clear` between unrelated tasks.
+
+---
 
 ## Skill routing
 
-When the user's request matches a scrips-stack skill, ALWAYS invoke it using the Skill tool as your FIRST action. Do NOT answer directly, do NOT use other tools first.
+When the user's request matches a scrips-stack skill, invoke it with the Skill
+tool as your FIRST action — don't answer directly or use other tools first.
 
-Key routing rules:
-- Ship, deploy, create PR, push branch → invoke **ship**
-- Code review, check my diff, review this PR → invoke **review**
-- Bug, error, crash, 500, why is this broken → invoke **investigate**
-- Sprint planning, sprint demo, sprint review, Jira ceremony → invoke **sprint**
-- Figma to code, Signal DS, component → invoke **design-sync**
-- QA, test the feature, acceptance criteria, staging → invoke **qa**
-- Morning brief, what's the plan today, standup → invoke **brief**
-- Retrospective, retro, what did we ship → invoke **retro**
-- Security audit, OWASP, vulnerabilities, DB access control → invoke **cso**
-- Save progress, checkpoint, resume later → invoke **checkpoint**
+- Ship / deploy / create PR / push branch → **ship**
+- Code review / check my diff / review this PR → **review**
+- Bug / error / crash / 500 / "why is this broken" → **investigate**
+- Sprint planning / demo / Jira ceremony → **sprint**
+- Figma to code / Signal DS / component → **design-sync**
+- QA / test the feature / acceptance criteria / staging → **qa**
+- Morning brief / standup / "plan today" → **brief**
+- Retro / "what did we ship" → **retro**
+- Security audit / OWASP / DB access control → **cso**
+- Save progress / checkpoint / resume later → **checkpoint**
+- Onboard a new engineer / "onboard me" → **onboard**
 
-Methodology routing (auto-invoke without being asked):
-- User starts describing a new feature, component, or behavior → invoke **brainstorming** FIRST
-- Requirements clear, about to write code → invoke **writing-plans**
-- Implementing from a plan → invoke **test-driven-development** before each unit
-- Plan has parallel independent tasks → invoke **subagent-driven-development**
-- User says "done", "finished", "it works" → invoke **verification-before-completion** FIRST
-- Bug, test failure, "why isn't this working" → invoke **systematic-debugging** FIRST
-- About to open a PR → invoke **requesting-code-review**
-- Review feedback received → invoke **receiving-code-review** before implementing
+Methodology (auto-invoke without being asked):
+- New feature/component/behavior described → **brainstorming** FIRST
+- Requirements clear, about to code → **writing-plans**
+- Implementing from a plan → **test-driven-development** (per unit)
+- Plan has independent parallel tasks → **subagent-driven-development**
+- User says "done"/"it works" → **verification-before-completion** FIRST
+- Bug / test failure → **systematic-debugging** FIRST
+- About to open a PR → **requesting-code-review**; feedback arrives → **receiving-code-review**
 
-## Available scrips-stack skills
+---
 
-Installed at: `~/.claude/skills/scrips/`
+## Available skills
 
-/ship · /review · /investigate · /sprint · /design-sync · /qa · /brief · /retro · /cso · /checkpoint
+Installed flat at `~/.claude/skills/<name>/` by `./setup` (the umbrella link
+`~/.claude/skills/scrips/` also resolves for reference).
 
-## Engineering methodology skills
+Scrips: `/ship` · `/review` · `/investigate` · `/sprint` · `/design-sync` · `/qa` · `/brief` · `/retro` · `/cso` · `/checkpoint` · `/onboard` · `/synth` · `/admin-sprint-runner` · `/decompose-strategy`
 
-These are Samer's personal superpowers — general-purpose engineering process skills available to all agents, including Andrew's sessions. Installed at `~/.claude/skills/`.
+Methodology (`~/.claude/skills/scrips/methodology/`): `/brainstorming` · `/writing-plans` · `/test-driven-development` · `/systematic-debugging` · `/verification-before-completion` · `/using-git-worktrees` · `/subagent-driven-development` · `/executing-plans` · `/dispatching-parallel-agents` · `/requesting-code-review` · `/receiving-code-review` · `/finishing-a-development-branch`
 
-| Skill | When to use |
-|---|---|
-| `brainstorming` | **Before any creative work** — new features, new components, new behavior. Explores intent and requirements before a line is written. |
-| `writing-plans` | After requirements are clear, before touching code. Produces a step-by-step implementation plan saved to `docs/`. |
-| `subagent-driven-development` | When executing an implementation plan with independent tasks. Fans out work to parallel agents. |
-| `executing-plans` | When resuming a written plan in a new session with review checkpoints. |
-| `test-driven-development` | Before writing any implementation code. Write the test first, then implement. |
-| `verification-before-completion` | **Before claiming done.** Runs verification commands, confirms output. Evidence before assertions. |
-| `systematic-debugging` | When you hit a bug, test failure, or unexpected behavior. Prevents random fix attempts. |
-| `dispatching-parallel-agents` | When 2+ independent tasks can run simultaneously. |
-| `finishing-a-development-branch` | When implementation is complete and you need to decide: PR, merge, or cleanup. |
-| `using-git-worktrees` | For isolated sprint or feature branches. Keeps main workspace clean. |
-| `requesting-code-review` | Before opening a PR or asking for review — structures the review request. |
-| `receiving-code-review` | When review feedback arrives — before implementing suggestions. |
+---
 
-### Routing for Andrew
+## Verify-before-done (team rule)
 
-If you're Andrew using this CLAUDE.md:
-- Starting a new feature → `brainstorming` first, then `writing-plans`
-- Implementing from a plan → `test-driven-development` + `subagent-driven-development`
-- Hit a bug → `systematic-debugging` (not random guessing)
-- About to say "done" → `verification-before-completion` first
-- Opening a PR → `requesting-code-review`
+No claim of "done / working / passing / rendered" without primary evidence
+produced this session — a screenshot for UI, real test output for tests, a grep
+for "the route mounts it". A passing logic test is not proof a UI renders. When
+you can't verify, say "UNVERIFIED" and why. (This is what `/verification-before-completion` enforces.)
