@@ -127,6 +127,23 @@ Desktop or the figma MCP; do not cite a raw key in any message or doc.
 
 ---
 
+## Estimation — calibrate against measured reality (non-negotiable)
+
+Agents over-estimate (week-scale guesses for hour-scale work). Before giving ANY
+task or sprint estimate:
+1. **Read the measured baseline** — `Scripsteam/scrips-telemetry/baseline.json`
+   (per-category PR delivery-lead medians + per-ticket history; PRIMARY/measured).
+2. **Apply reference-class forecasting** — find the matching category, state the
+   measured median/p75, and correct your raw estimate toward it. Show both:
+   "raw estimate X; reference class (category, n=…) median Y → corrected Z."
+3. **Record the estimate on the Jira ticket** (`estimatedMin` + category +
+   one-line rationale) so the loop closes — the reconciler later pairs it with the
+   measured actual (PR open→merge). An estimate not recorded on the ticket is a
+   lost calibration pair.
+
+Lead time = delivery (PR open→merge), not pure effort — estimate *delivery*, the
+thing sprint planning actually needs.
+
 ## Git & Jira conventions
 
 - **Jira project key: `PROD`.** Tickets are `PROD-XXXX`. (Not `DEV-`.)
