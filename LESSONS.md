@@ -117,6 +117,17 @@ and opens a PR). Don't let a lesson live only in someone's head.
   align edit-shell to billing underline-tab design`, a single CORS add, one
   Common.Core bump. Each is one reviewable concern. That's also the shape of a
   good first PR.
+- **A setup/install step that reports success without verifying its write is a
+  silent failure waiting to happen.** `team-setup.sh` step 5 (the
+  `settings.local.json` deny-rule merge) passed an MSYS path (`/c/Users/…`) into
+  native Windows Python → `FileNotFoundError`, but with no `set -e` and no
+  post-write check it still printed "merged ✓". Net: the security deny-guardrails
+  (MCP denies + `az`/`kubectl`/`terraform`) were never applied on any Windows
+  engineer's machine while setup reported READY. Two rules: **never pass an MSYS
+  path to native Windows Python** (do it in `jq`, or `python3 -c … < "$f" >
+  "$f.tmp"` so the shell owns the path); and **every mutating step must re-read
+  and assert its result, failing loud** — same family as "green tests can certify
+  a dead core." (Source: Andrew, 2026-06-10.)
 
 ---
 
