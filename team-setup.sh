@@ -61,7 +61,10 @@ for c in "${need_cmds[@]}"; do
 done
 if [ $ERRORS -gt 0 ]; then
   echo ""
-  echo "Resolve missing commands first, then re-run."
+  echo "Resolve missing commands first, then re-run. Common installs:"
+  echo "    jq      → macOS: brew install jq   ·   Windows: winget install jqlang.jq   ·   Linux: apt install jq"
+  echo "    npx/node→ install Node.js LTS (https://nodejs.org)"
+  echo "    claude  → npm i -g @anthropic-ai/claude-code"
   exit 1
 fi
 
@@ -85,7 +88,7 @@ step "3. figma-console MCP"
 CLAUDE_JSON="$HOME/.claude.json"
 if [ ! -f "$CLAUDE_JSON" ]; then
   err "$CLAUDE_JSON missing — open Claude Code once to initialize it"
-elif python3 -c "import json,sys; cfg=json.load(open('$CLAUDE_JSON')); sys.exit(0 if 'figma-console' in cfg.get('mcpServers',{}) else 1)" 2>/dev/null; then
+elif python3 -c "import json,sys; cfg=json.load(sys.stdin); sys.exit(0 if 'figma-console' in cfg.get('mcpServers',{}) else 1)" < "$CLAUDE_JSON" 2>/dev/null; then
   skip "figma-console MCP already configured"
 else
   TOK="${FIGMA_ACCESS_TOKEN:-}"
@@ -96,10 +99,12 @@ else
     err "figma-console MCP not added (no token)"
   else
     if [ $APPLY -eq 1 ]; then
-      python3 - <<PYEOF
-import json, os
-path = "$CLAUDE_JSON"
-cfg = json.load(open(path))
+      # Shell owns the path (read via stdin, write via stdout) so this works on
+      # Windows Git Bash too — never pass an MSYS path to native Python.
+      cp "$CLAUDE_JSON" "$CLAUDE_JSON.bak.team-setup"
+      if python3 -c '
+import json, os, sys
+cfg = json.load(sys.stdin)
 cfg.setdefault("mcpServers", {})["figma-console"] = {
   "type": "stdio",
   "command": "npx",
@@ -109,11 +114,17 @@ cfg.setdefault("mcpServers", {})["figma-console"] = {
     "ENABLE_MCP_APPS": "true"
   }
 }
-import shutil; shutil.copy(path, path + ".bak.team-setup")
-json.dump(cfg, open(path, "w"), indent=2)
-PYEOF
-      add "figma-console MCP added to ~/.claude.json (backup .bak.team-setup written)"
-      echo "    Restart Claude Code (cmd-q + reopen) to load the new MCP."
+json.dump(cfg, sys.stdout, indent=2)
+' < "$CLAUDE_JSON.bak.team-setup" > "$CLAUDE_JSON.tmp" \
+        && python3 -c "import json,sys; sys.exit(0 if 'figma-console' in json.load(sys.stdin).get('mcpServers',{}) else 1)" < "$CLAUDE_JSON.tmp"; then
+        mv "$CLAUDE_JSON.tmp" "$CLAUDE_JSON"
+        add "figma-console MCP added to ~/.claude.json (backup .bak.team-setup written)"
+        echo "    Restart Claude Code (cmd-q + reopen) to load the new MCP."
+      else
+        rm -f "$CLAUDE_JSON.tmp"
+        err "figma-console write failed or did not verify — ~/.claude.json left unchanged (backup at .bak.team-setup)"
+        exit 1
+      fi
     else
       skip "would add figma-console MCP to ~/.claude.json"
     fi
@@ -187,29 +198,36 @@ DESIRED='{
 }'
 
 if [ -f "$SETTINGS_LOCAL" ]; then
-  # Merge: preserve any existing permissions the engineer added, but ensure our denies + allows are present
+  # Merge: preserve any existing permissions the engineer added, but ensure our denies + allows are present.
+  # Shell owns the path (read via stdin, write via stdout) so native Windows Python never sees an MSYS
+  # path — the bug that silently dropped the deny guardrails on every Windows machine while reporting ✓.
   if [ $APPLY -eq 1 ]; then
-    python3 - <<PYEOF
-import json
-import os
-import shutil
-path = "$SETTINGS_LOCAL"
-existing = {}
-try:
-    with open(path) as f:
-        existing = json.load(f)
-except Exception:
-    existing = {}
-desired = json.loads('''$DESIRED''')
+    cp "$SETTINGS_LOCAL" "$SETTINGS_LOCAL.bak.team-setup"
+    if DESIRED_JSON="$DESIRED" python3 -c '
+import json, os, sys
+existing = json.load(sys.stdin)
+desired = json.loads(os.environ["DESIRED_JSON"])
 existing.setdefault("permissions", {})
 for bucket in ("allow", "deny"):
     cur = set(existing["permissions"].get(bucket, []))
     cur.update(desired["permissions"].get(bucket, []))
     existing["permissions"][bucket] = sorted(cur)
-shutil.copy(path, path + ".bak.team-setup")
-json.dump(existing, open(path, "w"), indent=2)
-PYEOF
-    add "merged allow + deny rules into $SETTINGS_LOCAL (backup .bak.team-setup written)"
+json.dump(existing, sys.stdout, indent=2)
+' < "$SETTINGS_LOCAL.bak.team-setup" > "$SETTINGS_LOCAL.tmp" \
+      && DESIRED_JSON="$DESIRED" python3 -c '
+import json, os, sys
+got = set(json.load(sys.stdin).get("permissions", {}).get("deny", []))
+want = json.loads(os.environ["DESIRED_JSON"])["permissions"]["deny"]
+missing = [r for r in want if r not in got]
+sys.exit(1 if missing else 0)
+' < "$SETTINGS_LOCAL.tmp"; then
+      mv "$SETTINGS_LOCAL.tmp" "$SETTINGS_LOCAL"
+      add "merged allow + deny rules into $SETTINGS_LOCAL (verified all deny rules present; backup .bak.team-setup written)"
+    else
+      rm -f "$SETTINGS_LOCAL.tmp"
+      err "deny-rule merge failed or did not verify — $SETTINGS_LOCAL left unchanged (backup at .bak.team-setup). SECURITY GUARDRAILS NOT APPLIED."
+      exit 1
+    fi
   else
     skip "would merge allow + deny rules into existing $SETTINGS_LOCAL"
   fi
