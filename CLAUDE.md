@@ -30,7 +30,7 @@ conclude "doesn't exist" from a narrow search.
 
 | Question | Authority (consult this, not a sibling repo's filesystem) |
 |---|---|
-| Product UI design / components for ANY surface (practice, **practitioner**, patient) | **Signal DS**: graduated components in `scrips-signal-ds/src/{atoms,molecules,organisms,templates}`, rendered in Storybook (`signal-ds.vercel.app/storybook`), Figma = "Scrips Design System". A sibling React app is NOT the design reference. |
+| Product UI design / components for ANY surface (practice, **practitioner**, patient) | **The `scrips-signal-ds` repo is the source of truth**: component source in `src/{atoms,molecules,organisms,templates}`, `contracts/*.json`, `coverage-matrix.md`, `design-tokens.ts`, `DESIGN-STATE.md` — plus the installed `@scripsteam/scrips-signal-ds` package and **local Storybook** (`npm run storybook` in the repo). Figma = "Scrips Design System". A sibling React app is NOT the design reference. **`signal-ds.vercel.app/storybook` is an investor-demo deploy — it can lag the repo; never cite it as the dev source.** |
 | What's already built vs a genuine gap | `scrips-signal-ds/coverage-matrix.md` |
 | DS tokens / locked decisions | `scrips-signal-ds/tokens/design-tokens.ts` + `DESIGN-STATE.md` |
 | Repo map / what each repo is | this file |
@@ -110,11 +110,11 @@ what drifts when a token moves. The canonical primary blue is **`#005FD4`**
 (`--color-brand-primary` / `--color-interactive-default`, DS-015). The older
 `#0076F8` is **REJECTED** — if you see it, it's stale.
 
-Canonical references, in order:
-1. **Storybook** — https://signal-ds.vercel.app/storybook (the visual contract)
-2. **`Scripsteam/scrips-signal-ds`** — `DESIGN-STATE.md` (locked DS-NNN decisions), `tokens/design-tokens.ts` (hex), `contracts/*.json` (per-component)
-3. **Installed exports** — `node_modules/@scripsteam/scrips-signal-ds/dist/index.d.ts` (read props before composing)
-4. **External-AI mirrors** — tokens.json / figma-variables.json / ai-tools-brief.html at signal-ds.vercel.app
+Canonical references, in order (the **repo is the source of truth**):
+1. **`Scripsteam/scrips-signal-ds` repo** — component source in `src/`, `contracts/*.json` (per-component), `DESIGN-STATE.md` (locked DS-NNN decisions), `tokens/design-tokens.ts` (hex), `coverage-matrix.md`.
+2. **Installed exports** — `node_modules/@scripsteam/scrips-signal-ds/dist/index.d.ts` (read props before composing).
+3. **Local Storybook** — `npm run storybook` *in the scrips-signal-ds repo* — the live visual contract, always in sync with your checkout.
+4. **`signal-ds.vercel.app/storybook` — investor-demo deploy only.** It can lag the repo; do NOT use it as the dev source of truth.
 
 If a component is missing, open a PR against `Scripsteam/scrips-signal-ds` — do not
 author it inside a consumer app's domain folders.

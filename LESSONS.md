@@ -83,9 +83,11 @@ and opens a PR). Don't let a lesson live only in someone's head.
 - **Signal DS is a package, not a folder.** `@scripsteam/scrips-signal-ds`
   (GitHub Packages, Scripsteam-private). Compose its exports; read
   `node_modules/@scripsteam/scrips-signal-ds/dist/index.d.ts` for props before
-  building a screen; browse the Storybook for the visual contract. Missing a
-  component → PR it into `Scripsteam/scrips-signal-ds`, never author it in a
-  consumer app's domain folder.
+  building a screen. **Source of truth = the `scrips-signal-ds` repo** (source +
+  `contracts/*.json` + `coverage-matrix.md`) + **local Storybook** (`npm run
+  storybook` in that repo); `signal-ds.vercel.app/storybook` is an investor-demo
+  deploy that can lag — never the dev source. Missing a component → PR it into
+  `Scripsteam/scrips-signal-ds`, never author it in a consumer app's domain folder.
 - **Local install needs GitHub Packages auth.** `.npmrc` points `@scripsteam` at
   GitHub Packages; set `NODE_AUTH_TOKEN=$(gh auth token)` (token needs
   `read:packages` on Scripsteam) before `npm install`. A `401 Unauthorized` on
