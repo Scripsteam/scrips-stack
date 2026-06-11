@@ -57,6 +57,13 @@ Source: <flutter module path>  ·  Target: <react repo>
 Coverage: N units — P port / C compose / D done. Not checked: <e.g. sub-widgets under X>.
 ```
 
+## Color — always via `flutter-color-port`
+
+For any PORT row, the Flutter colors are mapped, never stripped to white and never
+hardcoded. Invoke **`flutter-color-port`** (Flutter/Vlad color → Signal DS semantic
+token) at the color step — it owns that one mapping so this register stays about
+compose/port/done.
+
 ## When NOT to use
 
 If the module is tiny (1–2 widgets), just check Signal DS inline — don't ceremony
