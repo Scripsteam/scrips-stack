@@ -1,35 +1,38 @@
 ---
-name: flutter-color-port
-description: Port-time color governance for taking a Flutter/Figma (Vlad) screen to React on Signal DS. Use whenever porting or auditing a Flutter widget/screen to React and you hit a color — every legacy Flutter color maps by ROLE to the UNIVERSAL Signal DS palette (DS-012/DS-022 — same palette on every surface, no per-specialty/per-module color), bound to a semantic TOKEN, never to white and never to a raw hex. Auto-fires on "port this Flutter screen", "convert the .dart", "why is this grey/white", "map the colors", "match Flutter parity". Owns ONE thing: Flutter color → Signal DS token at port time. The governing model lives upstream (DESIGN-STATE DS-NNN + tokens); this is the port slice of it, not the authority.
+name: flutter-style-port
+description: Port-time VISUAL-TOKEN governance for taking a Flutter/Figma (Vlad) screen to React on Signal DS — color AND typography/text. Use whenever porting or auditing a Flutter widget/screen to React and you hit a color, a font, a text size/weight, or a title/label alignment. Everything maps by ROLE to the universal Signal DS palette + type system, bound to a semantic TOKEN — never a raw hex, never a one-off font/size, never stripped to white, never a wrapped label. Auto-fires on "port this Flutter screen", "convert the .dart", "why is this grey/white", "map the colors/fonts", "fix the type", "title alignment", "match Flutter parity". Owns ONE thing: Flutter visual style → Signal DS token at port time. The governing model lives upstream (DESIGN-STATE DS-NNN + tokens); this is the port slice of it, not the authority.
 ---
 
-# flutter-color-port
+# flutter-style-port
 
-**The one rule:** porting Flutter → React does **not** mean stripping color to white. Vlad's
-Flutter/Figma design encoded *semantic* color. Those exact hexes are rejected (WCAG/brand), but their
-**meaning** is preserved — every one maps by **role** to the universal Signal DS palette, bound to a
-semantic **token**. **Map the color; never drop it, never hardcode the hex.**
+**The one rule:** porting Flutter → React does **not** mean stripping style to a generic white template.
+Vlad's Flutter/Figma design encoded *semantics* — color (teal = action), type (size/weight = hierarchy),
+alignment. The exact hexes/fonts are rejected (WCAG/brand), but their **meaning** is preserved — every
+one maps by **role** to the universal Signal DS palette + type system, bound to a semantic **token**.
+**Map it; never drop it, never hardcode a hex/px, never let a label wrap.**
 
-> Why this skill exists: ports kept rendering monochrome because the engineer/agent applied the
-> color *prohibitions* (no purple/orange, no per-module color, no raw hex) without applying the color
-> *governance*. Calm neutral base + mapped semantic color = the product Vlad designed. (Samer, 2026-06-11.)
+> Why this skill exists: ports kept looking AI-generated — color stripped to white, fonts/sizes
+> freelanced, labels wrapping — because the *prohibitions* were applied without the *mapping*. Calm
+> neutral base + mapped semantic color + the locked type scale = the product Vlad designed. (Samer, 2026-06-11.)
 
 ## This is the PORT SLICE, not the authority (read first — prevents drift)
 
-The **single source of truth for color** is upstream, and it wins over this file if they ever disagree:
+The **single source of truth** is upstream and wins over this file:
 
 - **Values:** `scrips-signal-ds/tokens/design-tokens.ts` → `@scripsteam/scrips-signal-ds/tokens.css`.
-- **Rules (the governing decisions):** `DESIGN-STATE.md` — **DS-012, DS-015, DS-016, DS-018, DS-021, DS-022** (+ DS-013). `CHANGELOG.md` is the dated record.
-- **Exact rejected-hex find-targets:** `REJECTED_COLORS` in `design-tokens.ts`. Grep it for the Flutter value you found; never copy a rejected hex into new code/docs (the DS color gate blocks it — raw hex doesn't cascade when a token moves, which is how blue drifted).
+- **Rules:** `DESIGN-STATE.md` — color = DS-012/015/016/018/021/022; **fonts = DS-017**; type/line-height = the `typography` const (S2/D-001). `CHANGELOG.md` = dated record.
+- **Rejected-hex find-targets:** `REJECTED_COLORS` in `design-tokens.ts`. Grep it; never inline a rejected hex (it won't cascade when a token moves — that is how blue drifted).
 
-**Before quoting any value or rule here, confirm it against the above** (source-of-truth discipline).
-This table is convenience; the tokens + DS-NNN are law. If this file lags a new DS-NNN, fix it.
+**Confirm against the above before quoting** (source-of-truth discipline). If this file lags a new DS-NNN, fix it.
 
-## The governing model (DS-012 / DS-022) — ONE universal palette, every surface
+---
 
-All domains and specialties — Scheduling, Patients, Billing, Clinical, Admin, every specialty —
-consume the **same** palette. **No surface gets its own color family; they differ by icon + label,
-never by hue.** Color is **not** limited to 3–4 and is **not** specialty-scoped. The full families:
+# PART A · COLOR
+
+## Governing model (DS-012 / DS-022) — ONE universal palette, every surface
+
+All domains/specialties consume the **same** palette. **No surface gets its own color family; they
+differ by icon + label, never hue.** Color is **not** limited to 3–4 and is **not** specialty-scoped.
 
 | Family | Token(s) | When (role) |
 |---|---|---|
@@ -39,74 +42,104 @@ never by hue.** Color is **not** limited to 3–4 and is **not** specialty-scope
 | **Status — error** | `--color-status-error` (red/500 `#CD3232`) | cancelled · failed · destructive · **allergy alert** |
 | **Status — warning** | `--color-status-warning` (yellow/500 `#E5A000`) | **out-of-range vital** · overdue · pending · patient flag |
 | **Neutral (slate ramp)** | `--color-text-*` / `--color-surface-*` / `--color-border-default` | text, surfaces, borders, muted/booked/disabled |
-| **Teal — chrome (DS-018)** | `colors.teal[500]` = `#007A85` (TS import — **no CSS var**, see gap note) | **non-clinical CHROME ONLY**: info accents, role-identity tags, badge counters, system banners. **NEVER status/severity. NEVER module theming** (DS-022). |
-| **Teal/300 — AI provenance (DS-021)** | `colors.teal[300]` = `#67C2C7` | **reserved exclusively** for the AI-authored-content provenance stripe (+ Orb glyph). Nothing else. |
-| **Okabe-Ito categorical (DS-018)** | `chart.{blue,orange,bluishGreen,…}` (TS import — **no CSS var**) | **data-viz ONLY** (chart fills, multi-series, cohorts). NOT body text, NOT status. |
+| **Teal — chrome (DS-018)** | `colors.teal[500]` = `#007A85` (TS import — **no CSS var yet**) | **non-clinical CHROME ONLY**: info accents, role-identity tags, badge counters, banners. **NEVER status/severity. NEVER module theming** (DS-022). |
+| **Teal/300 — AI provenance (DS-021)** | `colors.teal[300]` = `#67C2C7` | **reserved exclusively** for the AI-provenance stripe (+ Orb glyph). |
+| **Okabe-Ito categorical (DS-018)** | `chart.{blue,orange,bluishGreen,…}` (TS import — **no CSS var yet**) | **data-viz ONLY** (chart fills, multi-series, cohorts). NOT body text, NOT status. |
 | **Surface navy** | `--color-surface-sidebar` (`#0D1B4B`) | app-bar / side-nav background |
 | **Disabled** | `--color-interactive-disabled` (grey/400 `#CED7DB`) | disabled controls · pending · waitlist |
 
-**No purple, no orange as semantic** (DS-018 — neither has a CVD-safe AA-passing variant distinct from
-blue/red). **Switch ON = green** (DS-016). **Clinical severity L0–L4** (DS-013) is a *clinical-surface-only*
-pilot scale — don't apply it to scheduling/billing.
+**No purple, no orange as semantic** (DS-018). **Switch ON = green** (DS-016). **Clinical severity L0–L4**
+(DS-013) = clinical surfaces only.
 
-> **Token-layer gap (verified 2026-06-11):** the brand/status/neutral/surface families ARE emitted as
-> `--color-*` CSS vars in `tokens.css` — use `var(--color-*)` on CSS-Module surfaces. But the **teal ramp
-> (DS-018) and Okabe-Ito `chart` palette (DS-018) live ONLY in `design-tokens.ts`** (`colors.teal`, `chart`)
-> — they are **not** plumbed to CSS vars. On a CSS-Module surface you must `import { colors, chart } from
-> '@scripsteam/scrips-signal-ds/tokens'` and inline the value, OR flag it: the CSS-var plumbing for teal +
-> chart is a DS gap to close (file it; don't freelance a `--color-teal-*` that doesn't exist).
+> **Token-layer gap (2026-06-11):** brand/status/neutral/surface ARE `--color-*` CSS vars — use `var(--color-*)`.
+> Teal + Okabe-Ito are **TS-only** (`colors.teal`, `chart`) — `import { colors, chart } from '@scripsteam/scrips-signal-ds/tokens'`, or flag the CSS-var plumbing as a DS gap; never freelance a `--color-teal-*` that doesn't exist.
 
-## Legacy Flutter/Vlad hex → token (port-time lookup, BY ROLE)
+## Legacy Flutter color → token (BY ROLE)
 
-Replace by role; bind to the token. The same legacy teal maps to **different** targets by role —
-classify first.
+The same legacy teal maps to **different** targets by role — classify first.
 
-| Flutter/Vlad source (rejected) | Common alias | Role in the Flutter screen | → token |
+| Flutter/Vlad (rejected) | alias | role in screen | → token |
 |---|---|---|---|
-| teal | `enabledBtnBGColor`, `primary` | a primary **action** (button/link) | `--color-brand-primary` |
-| teal | accent / tag / badge / info chrome | non-clinical **chrome** | `--color-teal-500` (DS-018) |
-| old deep blue | `appBarColor`, title | emphasis / title | `--color-brand-depth` |
-| salmon | error/cancel | error/destructive | `--color-status-error` |
-| lime / checked-in green | success | success/paid | `--color-status-success` |
-| bright yellow / orange | warning/pending | warning/attention | `--color-status-warning` |
-| lavender grey | label/hint, "Booked" | muted text / neutral | `--color-text-muted` |
-| disabled grey | disabled | disabled/pending | `--color-interactive-disabled` |
-| app background | scaffold bg | page bg | `--color-surface-background` (cool-slate, not white) |
-| card / white | card | surface | `--color-surface-card` |
-| input border | border | border/divider | `--color-border-default` |
-| sidebar navy | nav bg | app-bar / side-nav | `--color-surface-sidebar` (`#0D1B4B`) |
+| teal | `enabledBtnBGColor`, `primary` | a primary **action** | `--color-brand-primary` |
+| teal | tag/badge/info chrome | non-clinical **chrome** | `colors.teal[500]` (DS-018) |
+| old deep blue | `appBarColor`, title | emphasis/title | `--color-brand-depth` |
+| salmon | error/cancel | error | `--color-status-error` |
+| lime / checked-in | success | success | `--color-status-success` |
+| bright yellow/orange | warning | warning | `--color-status-warning` |
+| lavender grey | label/hint, Booked | muted | `--color-text-muted` |
+| disabled grey | disabled | disabled | `--color-interactive-disabled` |
+| app bg | scaffold | page bg | `--color-surface-background` |
+| card/white | card | surface | `--color-surface-card` |
+| input border | border | border | `--color-border-default` |
+| sidebar navy | nav | app-bar/side-nav | `--color-surface-sidebar` |
 
-(Exact rejected hex values for the grep: see `REJECTED_COLORS` in `design-tokens.ts`.)
+(Exact rejected hexes for the grep: `REJECTED_COLORS` in `design-tokens.ts`.) Status: 7 Flutter colors collapse to 5 (`success/error/warning/info/neutral`) via `StatusChip`, text-only.
 
-## Status — 7 Flutter status colors collapse to 5 (DS-023 maps appt status)
+---
 
-`StatusChip`, text-only (no leading dot/glyph — color carries it):
+# PART B · TYPOGRAPHY & TEXT
 
-| Flutter status color | → Signal status | Used for |
+## Fonts (DS-017, locked 2026-05-16) — map, never pick a new one
+
+| Script | Font | Use |
 |---|---|---|
-| green | `success` | Fulfilled · Checked-in · Paid · Active · Submitted |
-| red | `error` | Cancelled · No-show · Payment failed · Claim rejected |
-| orange **→ merges into** yellow | `warning` | Out-of-range vital · Overdue · Drug interaction · Flag |
-| blue | `info` (`brand.primary`) | In session · Arrived · Processing · In-flight |
-| light blue **→** blue/300 | soft-info | Proposed · Draft · Pending review |
-| grey | `neutral` | Booked · Archived · Inactive |
-| disabled grey | `disabled` | Pending · Waitlist · Awaiting approval |
+| Latin | **Inter Variable** | all UI text |
+| Arabic / RTL | **Readex Pro Variable** | Arabic content (+ `dir="rtl"` + logical properties) |
+| Mono | **JetBrains Mono Variable** | codes, MRN, IDs, numeric tabular |
 
-## Procedure (during a Flutter → React port)
+Self-hosted: `https://signal-ds.vercel.app/fonts/scrips-fonts.css` (DS-017 single import point). Tokens:
+`typography.fontFamily` (`sans`=Inter, `mono`=JetBrains). **A Flutter screen's font → map to these by
+script.** Never introduce a Flutter/system font into the port.
 
-1. **Grep the `.dart` for color.** `Color(0xFF…)`, theme aliases (`enabledBtnBGColor`, `appBarColor`), `colors.*`. List every distinct color the widget uses.
-2. **Classify by ROLE, not hue** — action / status / chrome / data-viz / surface / border / muted / disabled. Role picks the token (the same legacy teal → blue if action, teal/500 if chrome).
-3. **Bind to the token** — `var(--color-*)` (CSS) or `semantic.*` (TS import from `@scripsteam/scrips-signal-ds/tokens`). **Zero raw hex in new React.**
-4. **Universal palette** — never give this specialty/module its own color (DS-012/022). Differ by icon + label.
-5. **Clinical color is meaning** — allergies → error, out-of-range vital → warning; never color a chronic-problem chip the same as an allergy. Severity must be scannable. Teal is chrome, never severity.
-6. **Verify gate-clean** — `grep` the diff for `#` in color positions → none; no rejected hex; no per-module color.
-7. **No role match? Don't invent** — flag to the DS owner; it may need a new semantic token (ADR), not a freelanced hex.
+## Type scale — snap to the tokens, never freelance a px
+
+Tokens (CSS vars, emitted): `--text-xs · --text-sm · --text-md · --text-lg · --text-base`, each with a paired
+`--text-*--line-height` companion (**1.4 body / 1.25 headings**, S2/D-001). Scale = **11 / 13 / 16 / 18 / 24**.
+
+| Role | size | token | note |
+|---|---|---|---|
+| label / whisper | 11–13 | `--text-xs` / `--text-sm` | muted color, uppercase optional |
+| body | 16 | `--text-md` | default reading |
+| value / lead | 18–24 | `--text-lg` / display | **value leads, label whispers** — the hierarchy |
+
+Map every Flutter `TextStyle.fontSize` to the nearest scale token by ROLE — **never bind an arbitrary px**.
+Weights: Inter Variable — regular (400) body, **500/600 for value/emphasis**; don't bold everything (no hierarchy = an AI tell).
+
+## Text-intent color
+
+`--color-text-primary` (#151B20, value/lead) · `secondary` · `muted` (#809099, label/hint) · `hint` · `inverse` (on dark).
+Pair size + color: lead = primary + 18–24; label = muted + 11–13.
+
+## Text & alignment rules (craft — checked on every text element)
+
+- **Label containment (pill/badge/chip/button/tag):** the label is **ONE line, never wraps, never clips.**
+  The control **hugs its content** (intrinsic width + padding); never a fixed/narrow box that forces a break.
+  Tight space → shorten/abbreviate or use an icon. Budget extra width for `uppercase`+`letter-spacing`.
+  (Recurring AI tell — an "IN PROGRESS" badge breaking to two lines. Codified in master-brief §6 + the closing gate.)
+- **Alignment:** left-align body + titles (LTR) / right-align (RTL Arabic via Readex + `dir="rtl"`). **Never
+  center long text or form labels** (centering everything is an AI tell). Use **optical** alignment, not just mathematical.
+- **Letter-spacing:** tight on large display values (`-0.01…-0.03em`); slight positive on small uppercase labels.
+- **Hierarchy by type, not decoration:** establish rank with size/weight/color, not boxes or color blocks.
+- **RTL:** Arabic strings → Readex Pro, `dir="rtl"`, CSS logical properties (`margin-inline`, `text-align: start`).
+- **Truncate, don't reflow, in fixed rows:** ellipsis a too-long value in a fixed-height row (e.g. a vital tile) rather than break layout — but never drop the unit (content-parity).
+
+---
+
+## Procedure (Flutter → React port)
+
+1. **Grep the `.dart`** for color (`Color(0xFF…)`, theme aliases, `colors.*`) AND text (`TextStyle`, `fontSize`, `fontWeight`, `fontFamily`, `textAlign`, `letterSpacing`, `height`). List every distinct style.
+2. **Classify by ROLE, not value** — color: action/status/chrome/data-viz/surface/border/muted; type: display/title/body/label/mono. Role picks the token.
+3. **Bind to the token** — `var(--color-*)` / `var(--text-*)` (CSS) or `semantic`/`typography`/`colors`/`chart` (TS import). **Zero raw hex, zero arbitrary px, zero new fonts.**
+4. **Universal palette + locked type** — no per-specialty color (DS-012/022); no off-scale sizes; Inter/Readex/JetBrains only (DS-017).
+5. **Run the text rules** — every label one-line + hugged; no centered long text; RTL handled; value-leads hierarchy.
+6. **Verify gate-clean** — `grep` the diff for `#` in color positions and raw `px` font-sizes → none; no rejected hex; no per-module color; no wrapped labels at the real rendered size.
+7. **No role match? Don't invent** — flag to the DS owner (may need a new token/ADR), never freelance.
 
 ## Boundaries (MECE)
 
-- **This skill owns:** Flutter color → Signal DS token at port time.
-- **`flutter-parity`** owns the compose-vs-port register; **`flutter-to-react`** owns the full port pre-flight + parity audit + verification (both invoke this at the color step).
-- **`claude-design-master-brief`** carries the *design-time* slice of the SAME governance (so Claude Design designs in-palette and the coding agent ports in-palette — one model, two consumers).
-- **`scrips-signal-ds` (tokens + DESIGN-STATE DS-NNN + CHANGELOG)** is the authority. Disagreement → token/DS wins; fix this file.
+- **This skill owns:** Flutter visual style → Signal DS token at port time (color + typography + text rules).
+- **`flutter-parity`** = compose-vs-port register; **`flutter-to-react`** = full port pre-flight + parity audit + verification (both invoke this at the style step).
+- **`claude-design-master-brief`** carries the *design-time* slice of the SAME governance (one model, two consumers).
+- **`scrips-signal-ds`** (tokens + DESIGN-STATE DS-NNN + CHANGELOG) is the authority. Disagreement → token/DS wins; fix this file.
 
-**Origin:** 2026-06-11 — Samer: the Flutter→Signal color map must be a skill the whole team uses on every port. Corrected same day after Samer caught that the 2026-05-15 6-row map was a stale subset (teal → blue) — DS-018 (teal ramp), DS-012/DS-022 (universal palette, no per-specialty color), DS-021 (provenance teal) govern, and this skill must defer to them.
+**Origin:** 2026-06-11 — Samer: the Flutter→Signal mapping must be a team skill used on every port, covering **color AND fonts/text/alignment** in ONE skill (renamed from `flutter-color-port`). Color corrected same day after the 2026-05-15 map proved stale (teal→blue); typography (DS-017) + text/alignment rules added so the whole visual-token port is governed in one place, deferring to the upstream authority.
