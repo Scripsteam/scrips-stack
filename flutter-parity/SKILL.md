@@ -57,6 +57,13 @@ Source: <flutter module path>  ·  Target: <react repo>
 Coverage: N units — P port / C compose / D done. Not checked: <e.g. sub-widgets under X>.
 ```
 
+## Style (color + type) — always via `flutter-style-port`
+
+For any PORT row, the Flutter visual style is mapped, never stripped to a generic
+white template. Invoke **`flutter-style-port`** (Flutter/Vlad color AND typography/text
+→ Signal DS token, by role) at the style step — it owns color + fonts + text/alignment
+so this register stays about compose/port/done.
+
 ## When NOT to use
 
 If the module is tiny (1–2 widgets), just check Signal DS inline — don't ceremony
