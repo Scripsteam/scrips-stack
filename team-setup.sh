@@ -157,6 +157,27 @@ else
 fi
 
 # ─────────────────────────────────────────────────────────────
+step "4b. Telemetry sink — clone scrips-telemetry"
+# The session-end push (installed by install-harness via ./setup) ships this
+# machine's events to ~/scrips-repos/scrips-telemetry/telemetry/<dev>/. Without
+# the clone the push fails loud and this dev's data never reaches the team aggregate.
+SINK="$HOME/scrips-repos/scrips-telemetry"
+if [ -d "$SINK/.git" ]; then
+  skip "scrips-telemetry already cloned at $SINK"
+else
+  if [ $APPLY -eq 1 ]; then
+    if git clone -q https://github.com/Scripsteam/scrips-telemetry.git "$SINK" 2>/dev/null \
+       || git clone -q git@github.com:Scripsteam/scrips-telemetry.git "$SINK" 2>/dev/null; then
+      add "cloned scrips-telemetry → $SINK (telemetry now flows to the team aggregate)"
+    else
+      err "could not clone scrips-telemetry — check 'gh auth status' / repo access, then clone manually: git clone https://github.com/Scripsteam/scrips-telemetry.git $SINK"
+    fi
+  else
+    skip "would clone Scripsteam/scrips-telemetry → $SINK"
+  fi
+fi
+
+# ─────────────────────────────────────────────────────────────
 step "5. ~/.claude/settings.local.json — permissions + deny rules"
 SETTINGS_DIR="$HOME/.claude"
 SETTINGS_LOCAL="$SETTINGS_DIR/settings.local.json"

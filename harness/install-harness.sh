@@ -1,13 +1,15 @@
 #!/bin/bash
 # scrips-stack harness installer — gives a dev the same engineering guardrails
-# the team runs: the DS-color gate, the destructive-bash gate, and the FHIR
-# architecture advisor. Idempotent. Run from anywhere.
+# the team runs (the DS-color gate, the destructive-bash gate, the FHIR
+# architecture advisor) PLUS the team-observability instruments (agent-track,
+# task-gate, session-end push). Idempotent. Run from anywhere.
 #
 #   bash harness/install-harness.sh
 #
 # What it does:
 #  - copies the portable hooks into ~/.claude/hooks/
 #  - copies the fhir-architecture-advisor agent into ~/.claude/agents/
+#  - copies the telemetry instruments into ~/.claude/telemetry/
 #  - merges the hook wiring into ~/.claude/settings.json (creates a backup first;
 #    never clobbers existing hooks — appends only the ones not already present)
 #
@@ -19,13 +21,19 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 HOOKS_DST="$HOME/.claude/hooks"
 AGENTS_DST="$HOME/.claude/agents"
+TELEM_DST="$HOME/.claude/telemetry"
 SETTINGS="$HOME/.claude/settings.json"
 
-mkdir -p "$HOOKS_DST" "$AGENTS_DST"
+mkdir -p "$HOOKS_DST" "$AGENTS_DST" "$TELEM_DST"
 cp "$SCRIPT_DIR"/hooks/*.py "$HOOKS_DST"/
 cp "$SCRIPT_DIR"/agents/*.md "$AGENTS_DST"/
+# Team observability instruments: the talk (agent dispatches) + estimate-vs-actual
+# + the push to the central sink. Machine-agnostic ($HOME / git email keyed).
+cp "$SCRIPT_DIR"/telemetry/*.py "$TELEM_DST"/
+cp "$SCRIPT_DIR"/telemetry/push.sh "$TELEM_DST"/ && chmod +x "$TELEM_DST"/push.sh
 echo "✓ hooks → $HOOKS_DST"
 echo "✓ agents → $AGENTS_DST"
+echo "✓ telemetry → $TELEM_DST"
 
 # Merge hook wiring into settings.json without clobbering existing hooks.
 #
@@ -35,19 +43,27 @@ echo "✓ agents → $AGENTS_DST"
 # while reporting ✓. The read also decodes utf-8-sig: PowerShell's Out-File
 # writes a UTF-8 BOM that otherwise makes json.load choke at char 0, leaving the
 # hooks unregistered even once the path is fixed. After the write we re-read and
-# assert every wanted hook is present — it can no longer claim success it didn't
-# achieve.
+# assert every wanted hook (gates AND telemetry) is present — it can no longer
+# claim success it didn't achieve.
+#
+# Both the guardrail gates and the telemetry instruments are registered through
+# THIS one safe path. (The telemetry hooks previously used the old
+# open(sys.argv[1]) + json.load pattern — i.e. the exact Windows bug this PR
+# exists to kill — so they are folded in here, not left on the broken path.)
 _merge_hooks() {
-  HOOKS_DIR="$HOOKS_DST" python3 -c '
+  HOOKS_DIR="$HOOKS_DST" TELEM_DIR="$TELEM_DST" python3 -c '
 import json, os, sys
 raw = sys.stdin.buffer.read().decode("utf-8-sig").strip()   # tolerate a PowerShell BOM
 settings = json.loads(raw) if raw else {}
 hooks_dir = os.environ["HOOKS_DIR"]
+telem_dir = os.environ["TELEM_DIR"]
+hooks = settings.setdefault("hooks", {})
+
+# 1) Guardrail gates — matcher-less (the Python self-filters on tool name).
 WANT = {
     "PreToolUse": ["bash-destructive-gate.py", "ds-color-gate.py"],
     "UserPromptSubmit": ["fhir-architecture-trigger.py"],
 }
-hooks = settings.setdefault("hooks", {})
 for event, scripts in WANT.items():
     matchers = hooks.setdefault(event, [])
     present = json.dumps(matchers)
@@ -56,6 +72,27 @@ for event, scripts in WANT.items():
             continue
         matchers.append({"hooks": [{"type": "command",
             "command": f"python3 {hooks_dir}/{s}"}]})
+
+# 2) Telemetry instruments — matcher-scoped so they fire only on the right tools.
+#    agent-track logs every PreToolUse it sees, so it MUST be scoped to Agent.
+#    task-gate self-filters but we scope it too to avoid firing on every call.
+#    push.sh ships this machine events to the sink on session end.
+def ensure(event, matcher, cmd, basename):
+    """Idempotent + migrating: purge ANY prior hook referencing this instrument
+    by basename (e.g. an older differently-pathed copy), then add the canonical
+    one exactly once. Prevents the double-count two Agent hooks would cause."""
+    arr = hooks.setdefault(event, [])
+    arr[:] = [e for e in arr
+              if not any(basename in hk.get("command", "") for hk in e.get("hooks", []))]
+    entry = {"hooks": [{"type": "command", "command": cmd}]}
+    if matcher is not None:
+        entry["matcher"] = matcher
+    arr.append(entry)
+
+ensure("PreToolUse", "Agent", f"python3 {telem_dir}/agent-track.py", "agent-track.py")
+ensure("PreToolUse", "TaskCreate|TaskUpdate", f"python3 {telem_dir}/task-gate.py", "task-gate.py")
+ensure("SessionEnd", None, f"bash {telem_dir}/push.sh", "push.sh")
+
 json.dump(settings, sys.stdout, indent=2)   # plain utf-8, no BOM
 '
 }
@@ -65,12 +102,13 @@ _verify_hooks() {
 import json, sys
 raw = sys.stdin.buffer.read().decode("utf-8-sig").strip()
 settings = json.loads(raw) if raw else {}
-WANT = {
-    "PreToolUse": ["bash-destructive-gate.py", "ds-color-gate.py"],
-    "UserPromptSubmit": ["fhir-architecture-trigger.py"],
-}
 blob = json.dumps(settings.get("hooks", {}))
-missing = [f"{e}:{s}" for e, ss in WANT.items() for s in ss if s not in blob]
+# All six must have landed: 3 guardrail gates + 3 telemetry instruments.
+WANT = [
+    "bash-destructive-gate.py", "ds-color-gate.py", "fhir-architecture-trigger.py",
+    "agent-track.py", "task-gate.py", "push.sh",
+]
+missing = [s for s in WANT if s not in blob]
 if missing:
     sys.stderr.write("missing hooks: " + ", ".join(missing) + "\n")
     sys.exit(1)
@@ -88,7 +126,7 @@ fi
 
 if _merge_hooks < "$_src" > "$SETTINGS.tmp" && _verify_hooks < "$SETTINGS.tmp"; then
   mv "$SETTINGS.tmp" "$SETTINGS"
-  echo "✓ settings updated (hooks registered + verified present; existing hooks untouched)"
+  echo "✓ settings updated (gates + telemetry registered + verified present; existing hooks untouched)"
 else
   rm -f "$SETTINGS.tmp"
   echo "✗ hook wiring failed or did not verify — $SETTINGS left unchanged. GUARDRAILS NOT REGISTERED." >&2
@@ -98,3 +136,5 @@ fi
 echo ""
 echo "Done. Restart Claude Code to load the hooks."
 echo "Installed gates: ds-color-gate (blocks rejected DS hex) · bash-destructive-gate · fhir-architecture advisor."
+echo "Installed telemetry: the-talk (agent dispatches) · estimate-vs-actual · session-end push to the sink."
+echo "Budget (token/\$ via OTEL) is opt-in — see scrips-telemetry/otel/README once a collector endpoint exists."
