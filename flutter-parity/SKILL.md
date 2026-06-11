@@ -57,12 +57,12 @@ Source: <flutter module path>  ·  Target: <react repo>
 Coverage: N units — P port / C compose / D done. Not checked: <e.g. sub-widgets under X>.
 ```
 
-## Color — always via `flutter-color-port`
+## Style (color + type) — always via `flutter-style-port`
 
-For any PORT row, the Flutter colors are mapped, never stripped to white and never
-hardcoded. Invoke **`flutter-color-port`** (Flutter/Vlad color → Signal DS semantic
-token) at the color step — it owns that one mapping so this register stays about
-compose/port/done.
+For any PORT row, the Flutter visual style is mapped, never stripped to a generic
+white template. Invoke **`flutter-style-port`** (Flutter/Vlad color AND typography/text
+→ Signal DS token, by role) at the style step — it owns color + fonts + text/alignment
+so this register stays about compose/port/done.
 
 ## When NOT to use
 
