@@ -38,3 +38,23 @@ you do differently. (The `scrips-stack-release` skill keeps this honest.)
 - When you change anything in `scrips-stack` → you write a release note here + a friendly team post + ask everyone to acknowledge.
 
 **Owner / questions:** Samer (rule owner) · this update authored via Claude Code.
+
+---
+
+## 2026-06-11 — Flutter→React port + Claude Design brief  (PRs #9, #11)
+
+> Backfilled. These shipped *after* the team's 2026-06-08 onboarding, so they weren't part of it.
+
+**What changed:**
+- `flutter-style-port` + `flutter-parity` — porting a Flutter screen to React with Signal-DS color + typography governance and parity checks.
+- `claude-design-master-brief` — the standing brief that grounds Claude Design work.
+
+**Why:** the PA Flutter→React port needs the colors/type to come from Signal DS, not be re-invented per screen.
+
+**What you do differently:** mostly Tariq (port work) — when porting a Flutter surface, the routing kernel invokes these; nothing to memorize.
+
+---
+
+## Before 2026-06-12 — already covered, not re-documented here
+
+The core engineering kit — `ship` · `review` · `sprint` · `qa` · `investigate` · `brief` · `retro` · `onboard` + the `methodology/` skills (TDD, systematic-debugging, writing-plans, verification-before-completion, git-worktrees, …) — was distributed 2026-06-08 (PRs #2–#6) and is **taught in the `/onboard` 48-hour arc** the team already completed. The routing kernel (`CLAUDE.md`) auto-invokes them from plain language, so they need no separate release note. This log starts tracking *new* changes from 2026-06-12; it deliberately does not re-teach what onboarding already covered.
