@@ -37,6 +37,7 @@ making them learn the codebase by reading it for a week:
 - **Kernel** — `scrips-stack/CLAUDE.md` grounds their agent in the real repo map, deploy path, conventions (installed by `./setup`).
 - **Shared memory** — `LESSONS.md` gives them the team's hard-won lessons (auth quirks, CORS-per-service, DS tokens, "green tests can certify a dead core") on day one.
 - **Harness** — the DS-color gate, destructive-bash gate, and FHIR advisor catch the classic mistakes automatically (installed by `./setup`).
+- **Org knowledge hub** — point them to "🤖 Scrips Agent Operating System — Team Kit" on Confluence (space DOC, page `4354932738`): the Release Log, Skills Catalog, Plugins & Agentic Code, and the Drills & Quizzes. Have them skim the Catalog + take the knowledge check during the day-1–2 path.
 
 So a grounded agent + guardrails + a scoped ticket = a real PR in two days, not two weeks. The engineer's job is to **direct and judge**, not to memorize the codebase.
 
