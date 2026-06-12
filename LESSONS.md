@@ -130,6 +130,23 @@ and opens a PR). Don't let a lesson live only in someone's head.
   "$f.tmp"` so the shell owns the path); and **every mutating step must re-read
   and assert its result, failing loud** — same family as "green tests can certify
   a dead core." (Source: Andrew, 2026-06-10.)
+- **Team-infra that "installs on every machine" has prerequisites beyond copying
+  files — its definition-of-done is a *second* engineer's data/effect actually
+  landing, not that files copied.** The telemetry instruments
+  (`agent-track`/`task-gate`/`push.sh`) installed cleanly yet delivered nothing
+  for teammates, for two unhandled reasons: (1) **git-identity** — they read
+  `git config --global user.email`, which returns the *personal* email for anyone
+  whose scrips identity is set per-repo via `includeIf` (`--global` deliberately
+  bypasses `includeIf`) → events mis-attributed. Fix: read the *effective*
+  `git config user.email` (no `--global`). (2) **private-repo access** — `push.sh`
+  pushes to the private `scrips-telemetry` sink, but teammates had no access (one
+  also lacked org write to open the fix PR) → `push.sh` exits "sink repo missing."
+  Net: only the author's machine emitted while the rollout looked done. So a
+  team-infra skill must, up front: resolve identity the way the team actually
+  configures git (effective, not `--global`), and include the access grants /
+  clone step in the rollout — then verify a real teammate completes the loop
+  end-to-end. Same family as "a setup step that reports success without verifying
+  its write." (Source: Tariq + Andrew, 2026-06-12.)
 
 ---
 

@@ -5,6 +5,18 @@ you do differently. (The `scrips-stack-release` skill keeps this honest.)
 
 ---
 
+## 2026-06-12 — Agent Kit hub on Confluence + release notes mirror
+
+**What changed:** created the org-knowledge hub "🤖 Scrips Agent Operating System — Team Kit" on Confluence (space DOC, under Platform & Infrastructure) — Release Log, Skills Catalog (all 50 skills), Plugins & Agentic Code, and Onboarding/Drills/Quizzes. Extended `scrips-stack-release` to mirror every future release note to the Confluence Release Log, and linked the hub from `/onboard`.
+
+**Why:** release notes + the skills/plugins/agentic-code inventory need to live in durable org knowledge and feed onboarding, not just in the repo.
+
+**What you do differently:** new engineers skim the hub + take the knowledge check during onboarding; kit changes now auto-mirror their note to Confluence (no extra step for you).
+
+**Owner / questions:** Samer. Hub: DOC page 4354932738.
+
+---
+
 ## 2026-06-12 — Telemetry attributes to the right person (effective git email)
 
 **What changed:**
