@@ -31,6 +31,10 @@ change. Runs **with** the change (same PR or immediately on merge), never as an 
    **What you do differently:** <the new habit / command / rule for the team>
    **Owner / questions:** <who to ask>
    ```
+   Then **mirror the same entry to the Confluence Release Log** (page `4354965505`, under the
+   "🤖 Scrips Agent Operating System — Team Kit" hub in space DOC) so the org-knowledge / onboarding
+   copy stays current — Confluence is the onboarding-facing mirror; `RELEASES.md` is the source of truth.
+   If a new skill was added, also add its row to the Confluence **Skills Catalog** (`4354998273`).
 2. **Education material** — write the friendly explainer. Default surface = a well-formatted Slack
    message (mrkdwn) the team actually reads. For a bigger change, also drop an HTML one-pager in
    `~/claude-os/artifacts/<date>-<slug>-team-brief.html` and link it. Plain language, no internal jargon,
