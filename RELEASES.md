@@ -5,6 +5,23 @@ you do differently. (The `scrips-stack-release` skill keeps this honest.)
 
 ---
 
+## 2026-06-12 — Telemetry attributes to the right person (effective git email)
+
+**What changed:**
+- The three telemetry instruments (`agent-track.py`, `task-gate.py`, `push.sh`) now key events on your **effective** git email (`git config user.email` — local > `includeIf` > global) instead of `git config --global user.email`.
+
+**Why:** anyone whose scrips identity is set *per-directory* via `includeIf` (not globally) was being logged under their **personal global email** — so events landed in the sink under a stranger's key and fragmented the team digest. Caught on Tariq's machine: 28 events stamped a personal hotmail address instead of `tariq@scrips.com`. The instruments forced `--global`, which deliberately bypasses the very `includeIf` that gives you your scrips identity. If you use `includeIf` (likely Andrew too), this affected you.
+
+**What you do differently:**
+- Re-run `./setup` (or `bash harness/install-harness.sh`) to pick up the fixed instruments — on Windows the install is a dir copy, so the re-run is required.
+- If you already generated events under a personal email, relabel the `dev` field in `~/.claude/telemetry/events.jsonl` to your scrips email before they push to the sink.
+
+**Still open (not fixed here):** the central sink repo (`scrips-telemetry`) must exist and be cloned to `~/scrips-repos/scrips-telemetry` for `push.sh` to deliver — otherwise it exits "sink repo missing". Confirm repo name + access with Samer.
+
+**Owner / questions:** Tariq (authored via Claude Code) · Samer (telemetry owner).
+
+---
+
 ## 2026-06-12 — Retroactive note: Team Agent Observability (telemetry)  (shipped ~2026-06-10, commit 361eec5; documented now)
 
 > Backfilled — this shipped before the release-discipline rule existed, so it never got a release note or a team post. Recording it now and educating the team.

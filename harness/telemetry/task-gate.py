@@ -6,7 +6,8 @@ from pathlib import Path
 from datetime import datetime
 
 def git_email():
-    try: return subprocess.run(["git","config","--global","user.email"],capture_output=True,text=True,timeout=5).stdout.strip() or "unknown"
+    # EFFECTIVE email (local > includeIf > global), NOT --global. See agent-track.py.
+    try: return subprocess.run(["git","config","user.email"],capture_output=True,text=True,timeout=5).stdout.strip() or "unknown"
     except Exception: return "unknown"
 
 LOG = Path.home() / ".claude" / "telemetry" / "events.jsonl"

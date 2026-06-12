@@ -7,7 +7,10 @@ from pathlib import Path
 from datetime import datetime
 
 def git_email():
-    try: return subprocess.run(["git","config","--global","user.email"],capture_output=True,text=True,timeout=5).stdout.strip() or "unknown"
+    # EFFECTIVE email (local > includeIf > global), NOT --global. Devs whose scrips
+    # identity is set per-dir via includeIf would otherwise log under their personal
+    # global email and show up as a stranger in the team digest.
+    try: return subprocess.run(["git","config","user.email"],capture_output=True,text=True,timeout=5).stdout.strip() or "unknown"
     except Exception: return "unknown"
 
 LOG = Path.home() / ".claude" / "telemetry" / "events.jsonl"
