@@ -5,6 +5,18 @@ you do differently. (The `scrips-stack-release` skill keeps this honest.)
 
 ---
 
+## 2026-06-13 — Stage 00 Feature Brief: think across all five dimensions before you build  (PR #19)
+
+**What changed:** new skill **`/feature-brief`** — a "Stage 00" you run the moment you pick up a feature, before brainstorming or writing any code. It walks you through five dimensions in one pass — product, security, development, design, testing — catches conflicts *between* them (e.g. "this shows PHI in a viewer but no access model is defined", or "this re-builds something an ADR already owns"), and writes a structured brief that seeds the rest of the pipeline. It won't pass its own gate until every dimension is answered (or explicitly marked a gap) and no cross-dimensional conflict is left open.
+
+**Why:** the expensive gaps are the ones you don't think to ask about up front — the missing security model that surfaces at review, the DS component that doesn't exist yet found at design time, the "it already exists" that turns out not to. Holding all five lenses in your head at once is genuinely hard; this turns it into a ~10-minute checklist instead of a sprint-three surprise. One rule it enforces hard: any "this already exists / it's merged / the wiring's verified" gets checked against the live repo (`file:line`) before it's written down — no claim becomes fact without evidence.
+
+**What you do differently:** starting a feature? Run **`/feature-brief`** first — paste the Jira (`PROD-XXXX`) link, a Slack thread, or just describe it. Answer the five short rounds. You get a brief + a gate; only then open Stage 01. Re-pull `scrips-stack` and run `./setup` to get the command. (Auto-fire enforcement is Samer-side during this trial; you invoke it manually.)
+
+**Owner / questions:** Samer. First live run: the Consent Form Builder.
+
+---
+
 ## 2026-06-12 — Agent Kit hub on Confluence + release notes mirror
 
 **What changed:** created the org-knowledge hub "🤖 Scrips Agent Operating System — Team Kit" on Confluence (space DOC, under Platform & Infrastructure) — Release Log, Skills Catalog (all 50 skills), Plugins & Agentic Code, and Onboarding/Drills/Quizzes. Extended `scrips-stack-release` to mirror every future release note to the Confluence Release Log, and linked the hub from `/onboard`.

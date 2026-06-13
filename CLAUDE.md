@@ -174,7 +174,7 @@ tool as your FIRST action — don't answer directly or use other tools first.
 - PR merged / bug root-caused / "we shouldn't relearn this" / "capture this" → **lesson** (append to `LESSONS.md`, PR it)
 
 Methodology (auto-invoke without being asked):
-- New feature/component/behavior described → **brainstorming** FIRST
+- New feature/component/behavior described → **feature-brief** FIRST (Stage 00 — a 5-dimension brief + gate before any stage opens), then **brainstorming**
 - Requirements clear, about to code → **writing-plans**
 - Implementing from a plan → **test-driven-development** (per unit)
 - Plan has independent parallel tasks → **subagent-driven-development**
@@ -189,7 +189,7 @@ Methodology (auto-invoke without being asked):
 Installed flat at `~/.claude/skills/<name>/` by `./setup` (the umbrella link
 `~/.claude/skills/scrips/` also resolves for reference).
 
-Scrips: `/ship` · `/review` · `/investigate` · `/sprint` · `/design-sync` · `/qa` · `/brief` · `/retro` · `/cso` · `/checkpoint` · `/onboard` · `/synth` · `/admin-sprint-runner` · `/decompose-strategy` · `/lesson`
+Scrips: `/feature-brief` (Stage 00 — start every feature here) · `/ship` · `/review` · `/investigate` · `/sprint` · `/design-sync` · `/qa` · `/brief` · `/retro` · `/cso` · `/checkpoint` · `/onboard` · `/synth` · `/admin-sprint-runner` · `/decompose-strategy` · `/lesson`
 
 **Harness (the gates the team runs):** `harness/install-harness.sh` (run by `./setup`) installs the DS-color gate (blocks rejected hex like `#0076F8` in code), the destructive-bash gate, and the FHIR architecture advisor into `~/.claude/`. Same guardrails on every dev's machine.
 
