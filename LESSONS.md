@@ -178,6 +178,24 @@ and opens a PR). Don't let a lesson live only in someone's head.
   silent gap." Same family as the no-invent-UI gate and the feature-brief claim
   audit (what *actually* shipped vs what was claimed). (Source: PROD-1104 →
   PROD-1178, 2026-06-15.)
+- **On Windows (Git Bash) installed skills are directory *copies*, not symlinks —
+  so they don't track the repo; re-run `./setup` after every `git pull`.** `setup`
+  uses `ln -sfn`, but MSYS `ln -s` silently falls back to a deep copy on Windows
+  (verified: even base skills like `ship` are plain dirs at `~/.claude/skills/`
+  with no reparse point — `LinkType` empty). So a `git pull` updates the checkout
+  while the *installed* copies stay stale; the bare pull never re-copies them, so
+  the update step must run `./setup` too. The harness hooks + telemetry instruments
+  (re-`cp`'d by `install-harness.sh` each run) were always healed by re-running
+  `./setup` — e.g. the `--global`→effective-email instrument fix only reached a
+  Windows machine on the next `./setup`, never the bare `git pull`. **Skills,
+  though, were *not* refreshed by `./setup` until #22**: the loop skipped any
+  existing non-symlink dir (`[ -e ] && [ ! -L ] → skip`), so once a skill was
+  copied its `SKILL.md` never updated again — #22 made copy-fallback refresh-copy
+  every kit skill each run, which is why `git pull && ./setup` now heals skills as
+  well as hooks. macOS/Linux link live, so a pull alone is enough there. How to
+  apply: **Windows update = `git pull && ./setup`, never `git pull` alone**; the
+  README install/update step now says so. (Source: Andrew, 2026-06-13; refined
+  after #22, 2026-06-19.)
 
 ---
 

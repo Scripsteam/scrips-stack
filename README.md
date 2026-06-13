@@ -46,8 +46,10 @@ git add CLAUDE.md && git commit -m "chore: add scrips-stack skill routing"
 **Update to latest:**
 
 ```bash
-cd ~/.claude/skills/scrips && git pull
+cd ~/.claude/skills/scrips && git pull && ./setup
 ```
+
+> **Windows (Git Bash): re-run `./setup` after every `git pull`.** On Windows `ln -s` falls back to directory *copies*, not symlinks — so `~/.claude/skills/<name>` is a snapshot, not a live link to the repo. A `git pull` updates the checkout but leaves the installed skills (and the copied harness hooks + telemetry instruments) stale; `./setup` re-copies them. On macOS/Linux the link is live so `git pull` alone is enough, but running `./setup` is harmless there too.
 
 ---
 
