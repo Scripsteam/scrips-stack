@@ -5,6 +5,22 @@ you do differently. (The `scrips-stack-release` skill keeps this honest.)
 
 ---
 
+## 2026-06-14 — Feature Brief: trial-validated + polished from the first team run  (PR #21)
+
+**What changed:** `/feature-brief` improved after Andrew's first live run (on the Consent Form Builder):
+- The **claim audit now auto-runs** the git/grep and checks **both** what's shipped (`origin/main`) and what's only local — labelling each claim **MERGED / LOCAL-ONLY / ABSENT** — instead of leaving it to discipline.
+- Each round **pre-answers** what it can from the ticket/code and only asks the genuinely ambiguous questions.
+- The design round **proposes** the Signal DS components for you (and translates the jargon) rather than asking you to name them.
+- Two mechanical fixes: the DS-gap step creates the `primitive-needed` label if it's missing; the TOPIC block posts as a Jira **comment**, not a description rewrite.
+
+**Why:** the first run proved the ceremony's worth — its claim audit made the status honest (the consent document-builder / fill-engine / `PdfBoxOverlay` were POC/local-only, not merged; only the consent backend #882 + signing FE #546–557 are on `main`) and caught a platform duplication + a compliance question before any code. Andrew's verdict: "keep it, make it the default gate," plus this polish list. (Even the trial's own audit was nearly fooled by doing the check superficially — hence auto-running it now.)
+
+**What you do differently:** same as before — run `/feature-brief` first on any feature — it's now lower-friction (fewer obvious questions; it proposes the design components) and more trustworthy (the evidence table is run, not recalled). Re-pull + `./setup`.
+
+**Owner / questions:** Samer.
+
+---
+
 ## 2026-06-13 — Stage 00 Feature Brief: think across all five dimensions before you build  (PR #19)
 
 **What changed:** new skill **`/feature-brief`** — a "Stage 00" you run the moment you pick up a feature, before brainstorming or writing any code. It walks you through five dimensions in one pass — product, security, development, design, testing — catches conflicts *between* them (e.g. "this shows PHI in a viewer but no access model is defined", or "this re-builds something an ADR already owns"), and writes a structured brief that seeds the rest of the pipeline. It won't pass its own gate until every dimension is answered (or explicitly marked a gap) and no cross-dimensional conflict is left open.

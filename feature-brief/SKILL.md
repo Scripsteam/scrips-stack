@@ -38,7 +38,7 @@ Tell the user what you found: "I found [N] Jira children, inferred FHIR binding 
 
 ## Step 2 — Five-dimension interview (sequential, single agent)
 
-Work through each dimension in order. Ask all questions in a dimension, then synthesize. Catch cross-dimensional conflicts as they appear — do not defer to the end.
+For each dimension: **first pre-answer every question you can** from the input (Jira / Slack / code / the claim audit) and present those as "detected — confirm?". **Only ASK the questions that are genuinely ambiguous or need a human decision** — don't ask the author something the doc or code already answers (it wastes their time and trains them to rush through). Then synthesize, and catch cross-dimensional conflicts as they appear — do not defer to the end.
 
 ### Dimension 1 — Product
 1. Who is this for? (TOPIC persona — practitioner / patient / admin / system)
@@ -59,13 +59,26 @@ Work through each dimension in order. Ask all questions in a dimension, then syn
 
 ### Dimension 3 — Development
 
-**0. Claim audit (do this FIRST — before recording any answer in this dimension as fact).**
-For every "already exists / already merged / reuses X / wiring verified / engine is live" claim — whether from the requester, the Jira ticket, or your own assumption — **verify it against the live repo before writing it down.** Per the verification gate + github.md code-currency rule:
-- `git -C ~/scrips-repos/<repo> log origin/<default> -3 --oneline -- <path>` to confirm freshness, then grep/read the actual file.
-- Record each claim in a table: `claim | tier (PRIMARY / UNVERIFIED) | source file:line | verdict (HOLDS / OVERCLAIM / FALSE / BROKEN / NOT-FOUND)`.
-- A claim with no `file:line` evidence is recorded as `[UNVERIFIED]`, never as fact. "Reuses the X service" is FALSE if X is not in the repo. "Merged" means you found it on `origin/<default>`, not on a local branch.
+**0. Claim audit (do this FIRST, and actually RUN it — don't eyeball it).**
+Every "already exists / already merged / reuses X / wiring verified / engine is live" claim — from the requester, the ticket, or your own assumption — is verified by **running the commands and pre-filling the evidence table yourself**. Do not mark a claim from reading alone: the table is the load-bearing artifact and the easiest thing to fake by skimming (it bit even this skill's own author — see below).
 
-This step is load-bearing: a brief that records a requester's "✅ verified" at face value will seed every downstream stage with a false premise. (In the 2026-06-13 dogfood, 3 of 5 status checkmarks failed this audit.)
+For each claimed-existing artifact, RUN both checks and record which one it is:
+```bash
+# SHIPPED? — is it merged on the default branch (what a plan can build ON)?
+git -C ~/scrips-repos/<repo> fetch origin -q
+git -C ~/scrips-repos/<repo> log origin/<default> -5 --oneline -- <path>
+gh pr list -R Scripsteam/<repo> --state merged --search "<symbol or PROD-id>" --limit 5
+# LOCAL-ONLY? — does it exist only on a branch / in the working tree (still to be built)?
+grep -rn "<symbol>" ~/scrips-repos/<repo>/<dir>
+git -C ~/scrips-repos/<repo> branch -a --contains "<commit>" 2>/dev/null
+```
+Record each claim as `claim | PR# / commit / file:line | verdict`, where verdict is exactly one of:
+- **MERGED** — on `origin/<default>` (cite the PR# or commit). The claim holds; build on it.
+- **LOCAL-ONLY** — on a branch / in the working tree but NOT on the default branch (a POC or local first-cut). The claim is *in progress*, not *done* — plan it as net-new work.
+- **ABSENT** — not in the repo at all. "Reuses X" is FALSE when X is ABSENT.
+A claim with no PR#/commit/file:line is `[UNVERIFIED]` — never recorded as fact.
+
+**Check BOTH shipped and local — they answer different questions, and conflating them is the exact failure this step prevents.** It bites careful operators: in the first dogfood a superficial audit checked stale working-tree state, missed a *merged* consent backend (Scrips.Patient PR #882), and wrongly called it absent — while a *local-only* POC fill-engine was nearly recorded as "done". Run the commands; let the output, not the memory, fill the table.
 
 1. Which FHIR ResourceType(s) bind this feature? (must be a real R4 type — Consent, DocumentReference, Appointment, Observation…)
 2. Which existing services/tables are touched? (Scrips.Patient? Scrips.PracticeManagement? QuestionBank? new service?)
@@ -79,13 +92,19 @@ This step is load-bearing: a brief that records a requester's "✅ verified" at 
 - If the FHIR binding is contested, or the requester proposes a non-FHIR store for a resource that is a confirmed FHIR-native build → **auto-route to the `fhir-architecture-advisor` agent** for the source-of-truth call. Do not resolve it inside this ceremony.
 
 ### Dimension 4 — Design
-1. Where does this surface in app navigation? (which page/tab/route in practitioner / patient / admin)
-2. Which Signal DS primitives are needed? (named + hierarchy level: component / card / block / template / frame)
-3. Enumerate all entity states the UI must represent. (e.g., consent form: unsigned / pending-signature / signed / expired / revoked)
-4. Any GAPs in Signal DS for the above? (check `~/scrips-repos/scrips-signal-ds/src/index.ts` + `contracts/*.json`)
+
+*Design is the lens non-frontend authors find hardest, so YOU do the legwork — detect and **propose** the components; don't ask the author to recall DS names. (Jargon, translated: a "primitive" is a reusable UI building block; "hierarchy level" is how big — atom → molecule → organism → full page.)*
+
+1. Where does this surface in app navigation? (which page / tab / route in practitioner / patient / admin)
+2. Which Signal DS components does this surface need? **You propose them** by searching the DS (`coverage-matrix.md` + `src/index.ts` exports) — for each, one plain phrase ("a card showing one signed/unsigned consent") and mark EXISTS or GAP. Don't ask the author to name components.
+3. Enumerate all entity states the UI must represent. (e.g., consent: unsigned / pending-signature / signed / expired / revoked)
+4. Any GAPs in Signal DS for the above? (the EXISTS/GAP marks from Q2)
 
 For each GAP:
 ```bash
+# ensure the label exists first — a fresh repo won't have it (caught in the first dogfood)
+gh label create "primitive-needed" --repo Scripsteam/scrips-signal-ds \
+  --color FBCA04 --description "DS primitive required by a feature brief" 2>/dev/null || true
 gh issue create --repo Scripsteam/scrips-signal-ds \
   --title "primitive-needed: <surface name>" \
   --label "primitive-needed" \
@@ -211,7 +230,7 @@ trigger_next: "Stage 00 manifest gate.passed: true → Stage 01 may open"
 
 ### C. Jira epic update
 
-Update the Jira epic with the TOPIC classification block via `editJiraIssue`:
+Add the TOPIC classification block as a **comment** on the Jira epic via `addCommentToJiraIssue`. **Do not rewrite the issue description** — overwriting a long body is destructive (caught in the first dogfood). A comment is non-destructive and timestamped:
 
 ```
 ## TOPIC Classification
@@ -258,7 +277,7 @@ Recommended next step: /brainstorming to begin synthesis (Stage 02 BRD).
 
 **Calls:**
 - `getJiraIssue` — auto-populate from Jira epic
-- `editJiraIssue` — write TOPIC classification block
+- `addCommentToJiraIssue` — post the TOPIC classification block as a comment (never overwrite the description)
 - `gh issue create` — create DS GAP blocker tickets
 - `fhir-architecture-advisor` (agent) — auto-route when the FHIR binding is contested or a FHIR-native resource is proposed as a non-FHIR store
 - live-repo grep (`git log` + Read/Grep) — verify every claimed-existing artifact in Dimension 3 step 0
@@ -273,4 +292,6 @@ Recommended next step: /brainstorming to begin synthesis (Stage 02 BRD).
 
 **Origin:** 2026-06-12 — Samer: the meta problem is that it's cognitively hard for anyone to hold all five dimensions (product, security, development, design, testing) when transitioning from idea to execution. Stage 00 is the entry ceremony that does this for every feature, for everyone.
 
-**Hardening 2026-06-13** — after a live dogfood run against the consent-form-builder plan, three gaps were closed: (1) Dimension 3 now runs **claim-first** (verify "exists/merged/verified" against the repo before recording it — the run found 3 of 5 status checkmarks were false); (2) added a **platform-duplication** cross-check (the run's separate consent builder duplicated Template Studio / ADR-PROTO-010, which the original conflict table would have missed); (3) added a **regulatory-sufficiency** cross-check + `fhir-architecture-advisor` auto-route (canvas-only signature vs QES under DHA ST-09). Evidence: `~/claude-os/artifacts/2026-06-13-stage00-consent-builder-simulation.html`.
+**Hardening 2026-06-13** — after a live dogfood run against the consent-form-builder plan, three gaps were closed: (1) Dimension 3 now runs **claim-first** (verify "exists/merged/verified" against the repo before recording it); (2) added a **platform-duplication** cross-check (the run's separate consent builder duplicated Template Studio / ADR-PROTO-010, which the original conflict table would have missed); (3) added a **regulatory-sufficiency** cross-check + `fhir-architecture-advisor` auto-route (canvas-only signature vs QES under DHA ST-09). Evidence: `~/claude-os/artifacts/2026-06-13-stage00-consent-builder-simulation.html`.
+
+**Trial + polish 2026-06-14** — first live team run (Andrew, on the Consent Form Builder) validated the ceremony: the claim audit made the author correct his own status (the document builder / fill-engine / `PdfBoxOverlay` were POC/local-only, not merged — only the consent backend #882 + signing FE #546–557 are on `main`), and the 5-lens pass surfaced the Template-Studio duplication + the canvas-vs-QES escalation early. Folded his feedback: the claim audit now **auto-runs** the git/grep and checks **both** shipped (`origin/main`) and local (MERGED / LOCAL-ONLY / ABSENT — this also corrects the original sim, which superficially flagged the merged #882 backend as absent); dimensions **pre-answer** derivable questions and only ask the ambiguous ones; the design lens **proposes** DS components rather than asking the author to name them; the DS-GAP step **creates the `primitive-needed` label if missing**; the TOPIC block posts as a **Jira comment**, not a description rewrite.
