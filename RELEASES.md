@@ -5,6 +5,31 @@ you do differently. (The `scrips-stack-release` skill keeps this honest.)
 
 ---
 
+## 2026-06-15 — Team telemetry: see how we build (per person · project · task) — re-install required
+
+**What changed:** the harness now ships three lightweight telemetry instruments (installed by `./setup`, no extra steps):
+- **The talk** — which sub-agents you dispatch, tagged by the project (repo) you're in.
+- **Estimate vs actual** — when a task is created with an estimate and completed with an actual, that becomes a *calibration pair*. The `sprint` and `feature-brief` ceremonies now record this for you automatically — you don't hand-fill anything.
+- **Build effort** — token volume per project (measured from your local Claude transcripts).
+
+It rolls up into a **predictability dashboard** in `scrips-telemetry` — sliced by person, project, and task — so we can see where estimates run hot, where effort goes, and get sharper at forecasting. Each runs at session end, ships only to our private `scrips-telemetry` repo, keyed by your git email. Nothing leaves the org.
+
+Two fixes worth naming: estimate↔actual now pair correctly (they keyed on mismatched fields before, so the loop captured nothing), and your identity resolves consistently even if you use a per-repo git email.
+
+**On money:** the dashboard does **not** compute spend — billing $ lives in the **Anthropic Console → Usage** (org-level, accurate). Our telemetry owns predictability + effort, not dollars.
+
+**Why:** we estimate in weeks what lands in hours. The only way that improves is measuring estimate-vs-actual by person, project, and task type and feeding it back — that's predictability, and it was structurally empty until now.
+
+**What you do differently:** **re-pull + `./setup` + restart Claude** — this one needs the restart, because the instruments load when Claude starts. After that it's automatic; just keep using `sprint` / `feature-brief` as normal.
+```
+git -C ~/scrips-repos/scrips-stack pull && ./setup
+```
+Then quit and reopen Claude Code. That's it.
+
+**Owner / questions:** Samer. (Heads-up: until everyone re-installs, the dashboard only reflects whoever has — so it'll look light until the team picks this up.)
+
+---
+
 ## 2026-06-14 — Feature Brief: trial-validated + polished from the first team run  (PR #21)
 
 **What changed:** `/feature-brief` improved after Andrew's first live run (on the Consent Form Builder):
