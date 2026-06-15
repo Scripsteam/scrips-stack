@@ -30,6 +30,18 @@ Then quit and reopen Claude Code. That's it.
 
 ---
 
+## 2026-06-14 — setup now refreshes skills on Windows (no more silently-stale skills)
+
+**What changed:** `setup` detects whether the platform actually makes symlinks. On Windows Git Bash (no Developer Mode), `ln -s DIR` silently makes a full **copy**, not a link — and the old code then **skipped** any already-installed (non-symlink) skill on re-run. Result: `git pull && ./setup` refreshed hooks/telemetry but **never refreshed skill content** — an updated `SKILL.md` stayed frozen at first-install version. Now, in copy-fallback mode, setup **refresh-copies** every kit skill each run, so content tracks the repo. Also stops the umbrella `~/.claude/skills/scrips` from churning a new `scrips.bak.<ts>` dir on every run.
+
+**Why:** found on Windows when `/feature-brief` kept running #19 after #21 was pulled + `./setup` re-run. 4 skills were silently stale (`feature-brief`, `flutter-parity`, `onboard`, `scrips-stack-release`). Anyone on Windows (no symlink support) was affected — every skill content update since first install had silently not landed.
+
+**What you do differently:** nothing new — `git pull && ./setup` now actually delivers skill updates on Windows. macOS/Linux behavior (symlinks) is unchanged. If you previously hit stale skills, this run fixes them.
+
+**Owner / questions:** Tariq (authored via Claude Code) · Samer.
+
+---
+
 ## 2026-06-14 — Feature Brief: trial-validated + polished from the first team run  (PR #21)
 
 **What changed:** `/feature-brief` improved after Andrew's first live run (on the Consent Form Builder):

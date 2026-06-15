@@ -9,16 +9,38 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 echo "Setting up scrips-stack from $SCRIPT_DIR..."
 mkdir -p "$SKILLS_DIR"
 
-# Keep the umbrella link so `~/.claude/skills/scrips/CLAUDE.md` resolves
-# (referenced by the routing snippet in the README).
+# Does this platform actually make symlinks? Git Bash on Windows (without
+# Developer Mode) silently turns `ln -s DIR` into a full directory COPY. That
+# copy then looks like a user-placed non-symlink dir, so the skill loop below
+# used to SKIP it on every re-run — freezing skill CONTENT at first-install
+# version (a pull + ./setup refreshed hooks/telemetry but never the skills).
+# Probe once, then branch: link where we can, refresh-copy where we can't.
+SYMLINKS_OK=0
+_probe="$SKILLS_DIR/.symlink-probe.$$"
+ln -s "$SCRIPT_DIR" "$_probe" 2>/dev/null
+[ -L "$_probe" ] && SYMLINKS_OK=1
+rm -rf "$_probe"
+[ "$SYMLINKS_OK" -eq 1 ] || echo "Note: symlinks unavailable here (Windows copy-fallback) — skills will be refresh-copied."
+
+# Keep the umbrella so `~/.claude/skills/scrips/CLAUDE.md` resolves (referenced
+# by the routing snippet in the README).
 backup_path=""
 if [ "$SCRIPT_DIR" != "$SKILLS_DIR/scrips" ]; then
-  if [ -d "$SKILLS_DIR/scrips" ] && [ ! -L "$SKILLS_DIR/scrips" ]; then
-    backup_path="$SKILLS_DIR/scrips.bak.$(date +%s)"
-    echo "Existing scrips dir at $SKILLS_DIR/scrips — backing up to $backup_path"
-    mv "$SKILLS_DIR/scrips" "$backup_path"
+  if [ "$SYMLINKS_OK" -eq 1 ]; then
+    # Real symlink: back up a genuine user dir once, then link.
+    if [ -d "$SKILLS_DIR/scrips" ] && [ ! -L "$SKILLS_DIR/scrips" ]; then
+      backup_path="$SKILLS_DIR/scrips.bak.$(date +%s)"
+      echo "Existing scrips dir at $SKILLS_DIR/scrips — backing up to $backup_path"
+      mv "$SKILLS_DIR/scrips" "$backup_path"
+    fi
+    ln -sfn "$SCRIPT_DIR" "$SKILLS_DIR/scrips"
+  else
+    # Copy-fallback: refresh in place. The old code re-copied via `ln -sfn` AND
+    # mv'd the prior copy to scrips.bak.<ts> on EVERY run — churning a new backup
+    # dir each time. Replace cleanly instead (no per-run backup spam).
+    rm -rf "$SKILLS_DIR/scrips"
+    cp -r "$SCRIPT_DIR" "$SKILLS_DIR/scrips"
   fi
-  ln -sfn "$SCRIPT_DIR" "$SKILLS_DIR/scrips"
 fi
 
 # Register each skill flat — Claude Code's loader reads ~/.claude/skills/<name>/SKILL.md,
@@ -38,20 +60,28 @@ for skill_md in "$SCRIPT_DIR"/*/SKILL.md "$SCRIPT_DIR"/methodology/*/SKILL.md; d
   target="$SKILLS_DIR/$name"
   desired="$(dirname "$skill_md")"
 
-  if [ -e "$target" ] && [ ! -L "$target" ]; then
-    echo "  skip $name — non-symlink already exists at $target"
-    skipped=$((skipped + 1))
-    continue
+  if [ "$SYMLINKS_OK" -eq 1 ]; then
+    # Symlink platform: don't clobber a genuine user-placed non-symlink dir.
+    if [ -e "$target" ] && [ ! -L "$target" ]; then
+      echo "  skip $name — non-symlink already exists at $target"
+      skipped=$((skipped + 1))
+      continue
+    fi
+    # If a symlink already exists pointing at another collection (e.g. gstack),
+    # surface it as "replace" instead of silently retargeting.
+    if [ -L "$target" ] && [ "$(readlink "$target")" != "$desired" ]; then
+      echo "  replace $name — was → $(readlink "$target"), now → $desired"
+      replaced=$((replaced + 1))
+    fi
+    ln -sfn "$desired" "$target"
+  else
+    # Copy-fallback (Windows): a prior install is a real dir copy that the old
+    # code skipped, freezing it at first-install version. Refresh every run so
+    # skill CONTENT tracks the repo after a pull. These names are kit-owned, so
+    # an unconditional refresh is safe (no user-dir collision in practice).
+    rm -rf "$target"
+    cp -r "$desired" "$target"
   fi
-
-  # If a symlink already exists pointing at another collection (e.g. gstack),
-  # surface it as "replace" instead of silently retargeting.
-  if [ -L "$target" ] && [ "$(readlink "$target")" != "$desired" ]; then
-    echo "  replace $name — was → $(readlink "$target"), now → $desired"
-    replaced=$((replaced + 1))
-  fi
-
-  ln -sfn "$desired" "$target"
   linked=$((linked + 1))
   linked_names+=("$name")
 done
@@ -71,7 +101,11 @@ if [ -z "$SKIP_HARNESS" ] && [ -f "$SCRIPT_DIR/harness/install-harness.sh" ]; th
 fi
 
 echo ""
-echo "scrips-stack installed: $linked linked ($replaced replaced from another collection), $skipped skipped."
+if [ "$SYMLINKS_OK" -eq 1 ]; then
+  echo "scrips-stack installed: $linked linked ($replaced replaced from another collection), $skipped skipped."
+else
+  echo "scrips-stack installed: $linked skills refresh-copied (Windows copy-fallback — content now matches the repo)."
+fi
 [ -n "$backup_path" ] && echo "Backup of previous scrips dir: $backup_path (delete when satisfied)"
 
 # Verify by checking what the loader actually reads — the file at
