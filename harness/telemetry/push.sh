@@ -8,6 +8,10 @@
 set -uo pipefail
 SINK="$HOME/scrips-repos/scrips-telemetry"
 SRC="$HOME/.claude/telemetry/events.jsonl"
+# Refresh the budget snapshot (tokens/$ harvested from local transcripts) before
+# shipping, so it travels with this push. Best-effort — never blocks the push.
+BT="$HOME/.claude/telemetry/budget-track.py"
+[ -f "$BT" ] && python3 "$BT" >/dev/null 2>&1 || true
 [ -f "$SRC" ] || { echo "no telemetry yet"; exit 0; }
 [ -d "$SINK/.git" ] || { echo "sink repo missing at $SINK"; exit 1; }
 # EFFECTIVE email (local > includeIf > global), NOT --global — computed in the
