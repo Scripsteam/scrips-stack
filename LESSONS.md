@@ -147,6 +147,24 @@ and opens a PR). Don't let a lesson live only in someone's head.
   clone step in the rollout — then verify a real teammate completes the loop
   end-to-end. Same family as "a setup step that reports success without verifying
   its write." (Source: Tariq + Andrew, 2026-06-12.)
+- **A ticket that defers part of its acceptance criteria must FILE the deferred
+  scope as a linked follow-up BEFORE it's marked Done — a deferral is fine, an
+  *untracked* deferral is the defect.** Otherwise the gap lives only in a code
+  comment and surfaces weeks later when someone notices it in the running app, not
+  via any gate. PROD-1104 ("graduate the practitioner left-nav") had AC "logo slot
+  top, profile/avatar slot bottom"; it shipped the `PractitionerNav` *frame* and
+  legitimately left `brandSlot` (top logo) + `footerSlot` (avatar account-menu:
+  Account Settings + Logout) empty (the DS `Avatar`/`Menu`/`BrandMark` primitives
+  weren't graduated → no-invent rule) — but never filed the remainder and closed
+  Done. Tariq caught the missing nav chrome ~2 weeks later by eye. How to apply:
+  when a slice of stated AC is deferred (DS primitive / backend endpoint / Figma
+  not ready → no-invent / not-reachable / no-source), before transitioning to
+  Done (1) file a linked follow-up capturing the deferred AC + its blocker(s), and
+  (2) leave a scope-correction note on the original pointing at it. "Done" means
+  the AC is delivered OR its remainder is tracked elsewhere — never "Done with a
+  silent gap." Same family as the no-invent-UI gate and the feature-brief claim
+  audit (what *actually* shipped vs what was claimed). (Source: PROD-1104 →
+  PROD-1178, 2026-06-15.)
 
 ---
 
