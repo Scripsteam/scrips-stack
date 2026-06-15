@@ -59,6 +59,12 @@ For each dimension: **first pre-answer every question you can** from the input (
 
 ### Dimension 3 — Development
 
+> **Estimate → calibration pair.** Any development estimate this dimension produces is
+> reference-class-corrected against `scrips-telemetry/baseline.json` and recorded on the
+> task when it's created downstream (`TaskCreate` metadata `calibrationId`+`estimatedMin`+`category`;
+> `actualMin`+`scopeAlignment` on completion). See `CLAUDE.md` → Estimation. An estimate
+> that never becomes a recorded pair teaches the team nothing.
+
 **0. Claim audit (do this FIRST, and actually RUN it — don't eyeball it).**
 Every "already exists / already merged / reuses X / wiring verified / engine is live" claim — from the requester, the ticket, or your own assumption — is verified by **running the commands and pre-filling the evidence table yourself**. Do not mark a claim from reading alone: the table is the load-bearing artifact and the easiest thing to fake by skimming (it bit even this skill's own author — see below).
 

@@ -136,13 +136,25 @@ task or sprint estimate:
 2. **Apply reference-class forecasting** — find the matching category, state the
    measured median/p75, and correct your raw estimate toward it. Show both:
    "raw estimate X; reference class (category, n=…) median Y → corrected Z."
-3. **Record the estimate on the Jira ticket** (`estimatedMin` + category +
-   one-line rationale) so the loop closes — the reconciler later pairs it with the
-   measured actual (PR open→merge). An estimate not recorded on the ticket is a
-   lost calibration pair.
+3. **Record the calibration pair on the task itself** so the loop closes — this is
+   how the team learns to predict. Every task you create for real work carries the
+   estimate, and on completion the actual. The telemetry hook captures both:
 
-Lead time = delivery (PR open→merge), not pure effort — estimate *delivery*, the
-thing sprint planning actually needs.
+   - On **`TaskCreate`**, pass `metadata`:
+     `{ "calibrationId": "PROD-1234", "estimatedMin": <n>, "category": "feat|fix|chore|docs|other" }`
+   - On the completing **`TaskUpdate`** (`status: "completed"`), pass `metadata`:
+     `{ "calibrationId": "PROD-1234", "actualMin": <n>, "scopeAlignment": 1-5 }`
+   - **`calibrationId` MUST be identical on both** (use the Jira ticket key). It is the
+     only field present on both create and update — without it the pair never forms.
+   - `scopeAlignment`: 5 = built exactly what was scoped, 1 = scope drifted badly.
+
+   An estimate not recorded this way is a lost calibration pair — the predictability
+   dashboard (`scrips-telemetry` → per person/project/task) only learns from recorded
+   pairs. This is not optional bookkeeping; it is the mechanism by which estimates
+   get sharper over time.
+
+Lead time = delivery, not pure effort — estimate *delivery*, the thing sprint
+planning actually needs.
 
 ## Git & Jira conventions
 

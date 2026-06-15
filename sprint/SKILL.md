@@ -18,6 +18,13 @@ Ask or infer from context:
 
 ## Sprint Planning
 
+> **Close the predictability loop on every task you create.** When you turn a story
+> into a task, stamp the calibration metadata so the estimate becomes a learnable pair
+> (see `CLAUDE.md` → Estimation):
+> - `TaskCreate` metadata: `{ "calibrationId": "<PROD-key>", "estimatedMin": <n>, "category": "feat|fix|chore|docs|other" }` — the `estimatedMin` is your reference-class-corrected estimate, not a raw guess.
+> - on completion, `TaskUpdate` (`completed`) metadata: `{ "calibrationId": "<same PROD-key>", "actualMin": <n>, "scopeAlignment": 1-5 }`.
+> Same `calibrationId` both times (the Jira key) or the pair never forms. This is what makes next sprint's estimates sharper.
+
 ### 1. Pull current sprint state from Jira
 
 Use the Jira MCP tool to query:
