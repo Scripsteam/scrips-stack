@@ -98,6 +98,19 @@ and opens a PR). Don't let a lesson live only in someone's head.
 - **The Flutter `.dart` is the spec for the port.** Read the real source for
   behaviour, field order, validation strings, event sequencing. The *visual*
   structure comes from Signal Storybook, not Flutter. Don't invent it.
+- **Porting a sibling app's shared module ports its app-type GATES, not just its
+  widgets.** A "faithful" full port (PM-react → PA) silently carries the *other*
+  app's mode-only surfaces into the target, because the source gates them on app
+  type and copying the widget drops the gate. The PM Calendar leaked its
+  FU-Requests inbox (PM-only per `calendar_screen.dart:138` `AppType.PA` →
+  Calendar tab only), an all-providers-selected default, and an Enter-Encounter
+  action shown for every status (Flutter gates it to {Arrived,CheckedIn,Fulfilled}
+  at `calendar_tab.dart:2601`) — two leaks caught *by eye* before a systematic
+  sweep found two more. Before porting, grep the source for every app-type/mode
+  conditional (`AppType.`, `currentAppType`, `isProviderApp`, `isPM/isPA`…),
+  produce a gate list, and cross-check each ported surface against it — don't QA
+  it by eye. (Source: `Scripsteam/scrips-practitioner-react #24` / PROD-1190,
+  2026-06-16.)
 
 ## Process & agent discipline
 
