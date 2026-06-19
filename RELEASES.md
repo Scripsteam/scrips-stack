@@ -5,6 +5,20 @@ you do differently. (The `scrips-stack-release` skill keeps this honest.)
 
 ---
 
+## 2026-06-19 — Correction: remove `practitioner-flutter-to-react` from the kit (wrong layer)
+
+**What changed:** the `practitioner-flutter-to-react` skill added earlier today is **removed from the kit**. It was misplaced. The per-surface port skill already lives — and is richer — in each surface repo: `scrips-practitioner-react/.claude/skills/flutter-to-react` and `dev-scrips-pm-react/.claude/skills/flutter-to-react`, each grounded in that repo's CLAUDE.md conversion contract (the PA one already maps HPI/ROS/PE → `QuestionnaireRenderer`, A/P → `AssessmentPlanCanvas`, etc.). A surface skill in the kit duplicates those and collides with the project-level `flutter-to-react` name.
+
+**The kit's job is unchanged:** it carries the **generic engines + gates** — `flutter-style-port`, `flutter-parity`, `design-parity-judge`, `scrips-verify`, `port-spec`, `ds-parity-maintenance`. Surface-scoped port skills stay in the surface repos.
+
+**What you do differently:** nothing — re-pull + `./setup` drops the stray skill. Keep using your repo's own `flutter-to-react` / `/flutter-port`.
+
+**Note for the surface repos (owner: Tariq):** the PA `flutter-to-react` skill pins DS `^1.6.0`, but `scrips-practitioner-react/package.json` is `^1.11.0` — stale, worth a one-line fix.
+
+**Owner / questions:** Samer.
+
+---
+
 ## 2026-06-19 — Port protocol: diagnose first (Step 0)
 
 **What changed:** `practitioner-flutter-to-react` now opens with **Step 0 — diagnose first**: before building (or when inheriting an existing port), the agent runs a three-input check — *is the source legible? do the DS bricks exist? is there a frame contract to read?* — and names the gaps before writing any code. If a port already exists, it diffs against the source and labels each drift by cause (source-not-read / missing-brick / no-frame). Also: the skill now defers deep discovery to `port-spec` instead of duplicating it, and marks the Step 0–7 sequence as the canonical one that sibling wrappers (`pm-`/`ua-flutter-to-react`) reference.
