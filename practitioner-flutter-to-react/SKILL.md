@@ -33,7 +33,7 @@ the DS version." This skill is that layer.
 | Flutter app (source) | `scrips_msp1_pa` | repo map |
 | Flutter shared features (source) | `scrips_msp1_flutter_shared` — encounter, etc. live here, NOT in the app repo | verified: `encounter_screen.dart` is under `scrips_shared_features/.../encounter_module/` |
 | React app (target) | `scrips-practitioner-react` | repo map |
-| Signal DS package | `@scripsteam/scrips-signal-ds` `^1.11.0` | verified: `scrips-practitioner-react/package.json` |
+| Signal DS package | `@scripsteam/scrips-signal-ds` `^1.13.0` | verified 2026-06-19: `scrips-practitioner-react/package.json` (was `^1.11.0` in the original draft — re-verify before pinning, it moves) |
 | DS style consumption | Tailwind v4 `@source` the DS dist — NEVER import the bundle `styles.css` (utilities layer collides, zeroes `px-*`) | DS-styles consumption rule |
 | Storybook | confirm the port in the target repo (memory: 6006) | UNVERIFIED — check before citing |
 
