@@ -44,12 +44,30 @@ path) and run any bash tooling under WSL or git-bash.
 
 ## The port protocol (run in order; do not skip)
 
+This is the **canonical port sequence** — Step 0 then 1–7. Sibling wrappers (`pm-flutter-to-react`,
+`ua-flutter-to-react`) reference this sequence rather than re-authoring it.
+
+0. **Diagnose first — before building, or whenever inheriting an existing port.** Run the
+   three-input check and name the gaps; do NOT start building until they're named. This is the step
+   that lets the agent catch its own drift up front (proven 2026-06-19: an agent told to diagnose
+   first self-identified a ported screen's wrong-side summary, bare side-rail, and missing Orb before
+   any rework began).
+   - **Source legible?** Open the Flutter source — can the layout/behaviour be extracted
+     unambiguously? If not, that's the first gap.
+   - **Bricks exist?** Map each region to a Signal DS export; list MISSING blocks. A missing brick is
+     a build task, never licence to improvise.
+   - **Blueprint reachable?** Is there a frame contract the build reads? If not, writing it (Step 2)
+     is the first deliverable.
+   - **If a current port already exists:** diff it against the source and name each drift + its cause
+     — source-not-read / missing-brick / no-frame. Output a gap list, then proceed.
 1. **Anchor on the Flutter source — read it before writing React.** The source app is the layout
    source of truth. State the file path you read.
 2. **Extract a STATE TABLE / frame contract first.** For each view-state: region → position → the
    Signal DS component. Discover states from the code (don't assume names). For every row, quote the
    one line of code (file:line) that proves it. List any region with no DS export as a MISSING BLOCK.
-   Save it (e.g. `docs/<screen>-frame-contract.md`).
+   Save it (e.g. `docs/<screen>-frame-contract.md`). For a deep feature port (flows, API, state
+   machine), defer the discovery to **`port-spec`** and treat its output as the contract input —
+   don't duplicate that discovery here.
 3. **A missing block is the work — build it as a DS block.** Never hand-build a div where a block
    belongs. Stop and report missing bricks; do not improvise the layout around them.
 4. **Build to a declarative frame, not hand-wired layout.** Compose named, state-aware slots (per the
