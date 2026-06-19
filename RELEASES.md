@@ -5,6 +5,24 @@ you do differently. (The `scrips-stack-release` skill keeps this honest.)
 
 ---
 
+## 2026-06-19 — The parity loop now installs: two gates + the Practitioner port wrapper
+
+**What changed:** three skills join the kit.
+- **`design-parity-judge`** — the measured render-vs-source visual gate. It reads the live DOM and scores it against hard gates (no clipping, control-size coherence, real DS color, and **G6 parity-vs-source** for ports). It blocks any "done / at-parity" claim that has no measured gate table — a screenshot proves it rendered, not that it passes.
+- **`scrips-verify`** — the unified pre-handback check (always-on integration + security; conditional frontend/backend). Runs before a PR.
+- **`practitioner-flutter-to-react`** — a thin Practitioner-App surface wrapper. It carries the PA specifics (source repos `scrips_msp1_pa` / `scrips_msp1_flutter_shared`, target `scrips-practitioner-react`, Signal DS `^1.11.0`) and invokes the generic engines. It does NOT duplicate them — surface facts live in the wrapper, the engines stay generic.
+
+**Why:** a ported Practitioner encounter screen drifted from its Flutter source — patient summary on the wrong side, a bare side-rail, no Orb — and nothing caught it before it reached a review. The reason: `design-parity-judge` and `scrips-verify` existed only on one machine, never in the kit, so the team literally could not run the gate that should have caught it. And there was no PA surface layer, so the generic port engine had no surface facts to anchor on. This closes both holes.
+
+**What you do differently:** re-pull + `./setup` (git-bash on Windows) + restart Claude. Then for any practitioner port, invoke `practitioner-flutter-to-react` — it walks source → contract → frame → parity → verify, and won't let an agent call a port "done" without the measured parity table.
+```
+git -C ~/scrips-repos/scrips-stack pull && ./setup
+```
+
+**Owner / questions:** Samer.
+
+---
+
 ## 2026-06-15 — Team telemetry: see how we build (per person · project · task) — re-install required
 
 **What changed:** the harness now ships three lightweight telemetry instruments (installed by `./setup`, no extra steps):
