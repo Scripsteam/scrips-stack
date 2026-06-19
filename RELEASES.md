@@ -5,6 +5,18 @@ you do differently. (The `scrips-stack-release` skill keeps this honest.)
 
 ---
 
+## 2026-06-19 — Port protocol: diagnose first (Step 0)
+
+**What changed:** `practitioner-flutter-to-react` now opens with **Step 0 — diagnose first**: before building (or when inheriting an existing port), the agent runs a three-input check — *is the source legible? do the DS bricks exist? is there a frame contract to read?* — and names the gaps before writing any code. If a port already exists, it diffs against the source and labels each drift by cause (source-not-read / missing-brick / no-frame). Also: the skill now defers deep discovery to `port-spec` instead of duplicating it, and marks the Step 0–7 sequence as the canonical one that sibling wrappers (`pm-`/`ua-flutter-to-react`) reference.
+
+**Why:** proven the same day — an agent *told to diagnose first* self-identified a ported screen's wrong-side summary, bare side-rail, and missing Orb before any rework. Baking it in means that doesn't depend on someone remembering to ask.
+
+**What you do differently:** nothing new to install if you already pulled today — `git pull && ./setup` brings the updated skill. For any port, the agent diagnoses before it builds.
+
+**Owner / questions:** Samer.
+
+---
+
 ## 2026-06-19 — The parity loop now installs: two gates + the Practitioner port wrapper
 
 **What changed:** three skills join the kit.
