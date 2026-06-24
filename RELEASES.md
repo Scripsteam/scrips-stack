@@ -196,3 +196,15 @@ Then quit and reopen Claude Code. That's it.
 ## Before 2026-06-12 — already covered, not re-documented here
 
 The core engineering kit — `ship` · `review` · `sprint` · `qa` · `investigate` · `brief` · `retro` · `onboard` + the `methodology/` skills (TDD, systematic-debugging, writing-plans, verification-before-completion, git-worktrees, …) — was distributed 2026-06-08 (PRs #2–#6) and is **taught in the `/onboard` 48-hour arc** the team already completed. The routing kernel (`CLAUDE.md`) auto-invokes them from plain language, so they need no separate release note. This log starts tracking *new* changes from 2026-06-12; it deliberately does not re-teach what onboarding already covered.
+
+## 2026-06-24 — `encounter-builder` (the practitioner-encounter "one fire")
+
+**What:** a single skill `/encounter-builder` that builds the practitioner encounter end-to-end (pre-encounter → encounter → ordering → telemedicine), wave-by-wave, grounded in and gated against the **Encounter Contract** (`scrips-practitioner-react/docs/encounter-contract.md`, = ADR-ENCOUNTER-001).
+
+**Why:** the Flutter→React port kept drifting for ~3 weeks because there was no machine-readable frame contract and no layout-parity gate — every port re-derived the frame by eye from the Flutter monolith. This skill removes the guessing: it reads the Contract as source of truth and runs an independent layout-parity gate + judge before every PR.
+
+**How you run it (Tariq):** `/encounter-builder`. It reads the Contract, runs the current wave (build → verify → §10 gate → judge → DRAFT PR), then **pauses at the wave boundary** for human review + merge before continuing. It opens DRAFT PRs only — never merges, never touches infra. Full-stack (it also files the missing .NET endpoints, coordinating backend merges with Andrew).
+
+**Composes (does not reinvent):** admin-sprint-runner · be-sprint-runner · scrips-verify · design-parity-judge · ci-watch-and-fix · agent-outcome-tracker · flutter-style-port.
+
+**Prereq:** the Encounter Contract must be present in `scrips-practitioner-react/docs/` (landing PR in flight). Ack requested in #current-active-team-scrips.
