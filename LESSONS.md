@@ -196,6 +196,27 @@ and opens a PR). Don't let a lesson live only in someone's head.
   apply: **Windows update = `git pull && ./setup`, never `git pull` alone**; the
   README install/update step now says so. (Source: Andrew, 2026-06-13; refined
   after #22, 2026-06-19.)
+- **A repo that ships UI must run its test suite in CI on every PR — `npm run
+  build` proves it compiles, not that it behaves, so a green build can hide a red
+  suite indefinitely.** `scrips-practitioner-react`'s only workflow (`dev-web.yml`)
+  triggers on push to `main` only (no `pull_request`) and runs `npm ci → build →
+  docker → deploy` with **no `vitest` step** — PRs run nothing, `main` runs
+  build+deploy. A local full run during PROD-1329 surfaced 3 Storybook play-tests
+  that had been failing since their *introducing* PRs and never once passed: a
+  settings Billing-tab story calling `useNavigate()` with no `MemoryRouter`
+  decorator (#33/PROD-1210), and 2 scheduling Unblock stories whose
+  permission-gated button never renders because the story never seeds
+  `useAuthStore` (#24/PROD-1190). The authors verified the *visual* story render,
+  not the interaction, and nothing ever executed the `play()` assertions.
+  Compounding: the team gate is `npm run build` and the browser story-play suite is
+  ~30 min, so it's rarely run locally. How to apply: add a `pull_request` CI
+  workflow running `npm run build` + `vitest run` (split the fast unit tests from
+  the slow browser story-play tests so the gate stays quick); and when you add a
+  `play()` story or a component needing Router/auth/permission context, the story
+  decorators must provide that context. Same family as "verify before done" and
+  "green tests can certify a dead core." (Source: PROD-1357 ← PROD-1210 #33,
+  PROD-1190 #24; `scrips-practitioner-react` `.github/workflows/dev-web.yml`,
+  2026-06-26.)
 
 ---
 
