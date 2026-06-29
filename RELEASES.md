@@ -5,6 +5,38 @@ you do differently. (The `scrips-stack-release` skill keeps this honest.)
 
 ---
 
+## 2026-06-29 — New skill: `backend-performance-audit` — a disciplined perf-issue inventory
+
+**What changed:** a new kit skill, **`backend-performance-audit`**, joins the engines. It systematically
+audits a backend repo (or the whole `Scrips.*` family) for performance issues and produces a **ranked,
+deduplicated findings inventory** ready to hand to a fix phase — N+1 queries, unbounded/over-fetching
+reads, sync-over-async, socket exhaustion, missing cache, client-side eval, and more. It's read-only:
+it finds and triages, it does **not** fix or profile.
+
+What makes it more than grep: a fixed taxonomy of where backend latency comes from, a confirm-before-reporting
+rule (a regex hit is a *candidate*, you read context before recording a finding), severity × confidence ×
+hot-path ranking, and deduplication (forty instances of one anti-pattern become one batchable finding). It
+ships a high-recall scanner (`scripts/scan.py`, stdlib + ripgrep, read-only) plus per-stack heuristic
+references — **.NET/EF Core/ADO.NET/Dapper + SQL Server are first-class** (matches our backend), with
+Node/TS, Python, Java, Go, and raw SQL covered too.
+
+**Why it fits us:** it bakes in our realities — multi-tenant `orgId` scoping flagged as both a perf *and*
+correctness/security issue, and PII redaction (MRN, Emirates ID, names) in every evidence snippet. It's the
+"give me a triaged list of what's slow to fix later" tool that `/investigate` (single-incident debugging)
+and `/cso` (security) don't cover.
+
+**What you do differently:** re-pull + `./setup` registers it. Then ask for a performance audit / "what's
+making this slow" / an N+1 hunt across a backend repo and the skill runs the scan → confirm → rank → inventory
+loop. Treat its output as static-analysis candidates: it ranks by *likely* impact and tells you which top
+findings to confirm against real telemetry (Query Store / APM) before any large rewrite.
+```
+git -C ~/scrips-repos/scrips-stack pull && ./setup
+```
+
+**Owner / questions:** Andrew.
+
+---
+
 ## 2026-06-19 — Correction: remove `practitioner-flutter-to-react` from the kit (wrong layer)
 
 **What changed:** the `practitioner-flutter-to-react` skill added earlier today is **removed from the kit**. It was misplaced. The per-surface port skill already lives — and is richer — in each surface repo: `scrips-practitioner-react/.claude/skills/flutter-to-react` and `dev-scrips-pm-react/.claude/skills/flutter-to-react`, each grounded in that repo's CLAUDE.md conversion contract (the PA one already maps HPI/ROS/PE → `QuestionnaireRenderer`, A/P → `AssessmentPlanCanvas`, etc.). A surface skill in the kit duplicates those and collides with the project-level `flutter-to-react` name.
