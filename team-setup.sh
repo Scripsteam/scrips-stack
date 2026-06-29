@@ -289,6 +289,22 @@ else
 fi
 
 # ─────────────────────────────────────────────────────────────
+step "6.5 · lean-code gate — stable script path"
+LCC_SRC="$SCRIPT_DIR/lean-code-gate/lean-code-check.py"
+LCC_DST="$HOME/.claude/scripts/lean-code-check.py"
+if [ -f "$LCC_SRC" ]; then
+  if [ $APPLY -eq 1 ]; then
+    mkdir -p "$HOME/.claude/scripts"
+    ln -sf "$LCC_SRC" "$LCC_DST"
+    add "symlinked $LCC_DST -> kit lean-code-check.py (sprint-runners + the team release note call this path)"
+  else
+    skip "would symlink $LCC_DST -> $LCC_SRC"
+  fi
+else
+  err "$LCC_SRC not found (lean-code-gate kit missing from this clone)"
+fi
+
+# ─────────────────────────────────────────────────────────────
 step "7. Smoke test · readiness-check.sh"
 RC="$SCRIPT_DIR/readiness-check.sh"
 if [ -x "$RC" ]; then

@@ -1,0 +1,33 @@
+# Lean-code gate — anti-bloat CI check.
+# Adoption: copy this file to <repo>/.github/workflows/lean-code-check.yml
+#           and copy the canonical script to <repo>/.github/scripts/lean-code-check.py
+#           (source of truth: ~/claude-os/scripts/lean-code-check.py).
+# Blocks merge on FAIL (exit 2); warns on FLAG (exit 1). Enforces docs/engineering/lean-code-standard.md.
+name: lean-code-check
+on:
+  pull_request:
+    branches: [main, master]
+jobs:
+  lean-code:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # full history required for --diff
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }   # for npx jscpd
+      - name: Run lean-code gate (diff mode)
+        run: |
+          set +e
+          python3 .github/scripts/lean-code-check.py . --diff "origin/${{ github.base_ref }}"
+          code=$?
+          if [ "$code" -eq 2 ]; then
+            echo "::error::lean-code-check FAILED — see docs/engineering/lean-code-standard.md. Blocking merge."
+            exit 1
+          elif [ "$code" -eq 1 ]; then
+            echo "::warning::lean-code-check FLAG — allowed, but add a one-line justification in the PR body."
+            exit 0
+          fi
+          echo "lean-code-check passed."

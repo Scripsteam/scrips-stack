@@ -5,6 +5,23 @@ you do differently. (The `scrips-stack-release` skill keeps this honest.)
 
 ---
 
+## 2026-06-29 — Lean-code gate: stop writing new code instead of refactoring  (PR: lean-code-gate)
+
+**What changed:** a new **anti-bloat gate** the sprint-runners run before every PR.
+- New kit folder `lean-code-gate/` — the check script + a GitHub Actions workflow + README.
+- `team-setup.sh` now symlinks **`~/.claude/scripts/lean-code-check.py`** to the kit copy, so the command works the same on every machine. **Re-run `./team-setup.sh --apply` after pulling.**
+- `be-sprint-runner` + `admin-sprint-runner` gained a **Lean-code gate**: a one-line rule (*search before writing; edit/delete over add; justify any new file; no copy-paste*) and a required check before opening a PR:
+  ```
+  python3 ~/.claude/scripts/lean-code-check.py <repo> --diff <base> --suggest
+  ```
+  It measures **duplication** (jscpd), **god-files** (size budgets), and the **additive-diff smell** (adds lines, deletes nothing). `--suggest` prints a concrete, file-specific fix for every finding. Exit 0 PASS / 1 FLAG / 2 FAIL. Diff-mode only judges what your PR changed — it won't fail you for pre-existing debt you didn't touch.
+
+**Why:** a 2026-06-28 diagnostic measured it — `scrips-react` adds 5.7 lines for every 1 deleted (6.6% duplication); `Scrips.Patient` is 11% duplication with a 3,766-line `PatientService.cs`. Agents (and people) default to adding, not refactoring. Standard: `claude-os/docs/engineering/lean-code-standard.md`.
+
+**What you do differently:** before writing new code, grep for what exists and prefer editing/deleting; run the check (the sprint-runners do it for you) before opening a PR. FAIL blocks; FLAG is allowed with a one-line justification. CI runs the same gate once `lean-code-gate/lean-code-check.yml` is adopted per repo (mark it required in branch protection).
+
+**Owner / questions:** Samer.
+
 ## 2026-06-19 — Correction: remove `practitioner-flutter-to-react` from the kit (wrong layer)
 
 **What changed:** the `practitioner-flutter-to-react` skill added earlier today is **removed from the kit**. It was misplaced. The per-surface port skill already lives — and is richer — in each surface repo: `scrips-practitioner-react/.claude/skills/flutter-to-react` and `dev-scrips-pm-react/.claude/skills/flutter-to-react`, each grounded in that repo's CLAUDE.md conversion contract (the PA one already maps HPI/ROS/PE → `QuestionnaireRenderer`, A/P → `AssessmentPlanCanvas`, etc.). A surface skill in the kit duplicates those and collides with the project-level `flutter-to-react` name.
