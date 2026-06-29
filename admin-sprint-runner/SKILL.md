@@ -163,6 +163,21 @@ After all stories complete:
 - No commented-out code
 - Test coverage: every component renders, every form validates, every API call mocked
 
+### Lean-code gate (anti-bloat — enforced before handback/PR)
+
+**The rule (before writing ANY new code):** search the repo for an existing component/hook/util first; reuse a **Signal DS** component before hand-rolling UI; prefer editing or deleting over adding; when a feature changes, delete the code it replaces in the *same* change; any new file needs a one-line justification; no copy-paste — extract a shared hook/component.
+
+**The check (run before opening the PR):**
+```
+python3 ~/.claude/scripts/lean-code-check.py <repo> --diff <base-ref> --suggest
+```
+(`./team-setup.sh` symlinks `~/.claude/scripts/lean-code-check.py` to this kit's `lean-code-gate/lean-code-check.py`.)
+- **FAIL (exit 2)** → do NOT hand back / open the PR. Run with `--suggest` for the fix list. Reuse the DS, dedupe, split the oversized component, or delete dead code first.
+- **FLAG (exit 1)** → allowed only with a one-line justification in the PR body.
+- **PASS (exit 0)** → proceed.
+
+Enforces `claude-os/docs/engineering/lean-code-standard.md`. CI runs the same gate via `lean-code-gate/lean-code-check.yml`.
+
 ---
 
 ## When to Stop and Notify Samer
